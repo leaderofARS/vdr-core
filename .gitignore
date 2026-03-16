@@ -29,3 +29,13 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Dynamic Exmples Directory
+sipheron-vdr-examples/
+
+# Watcher specific ignores
+dropzone/
+watch-folder/
+completed-anchors/
+failed-anchors/
+anchored_hashes.json

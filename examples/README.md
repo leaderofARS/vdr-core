@@ -1,36 +1,43 @@
-# 🏛️ SipHeron VDR Implementation Models
+# 🦅 SipHeron VDR — Quickstart Examples
 
-This execution environment provides heavily-typed architectural models representing the standard institutional lifecycles for utilizing the underlying cryptographic endpoints of `@sipheron/vdr-core`.
+Welcome! These examples were automatically extracted into your project workspace when you ran `npm install @sipheron/vdr-core`. 
 
-These examples demonstrate rigorous state management, boundary conditions, and absolute isolation from external computational environments.
+This folder contains heavily-typed, ready-to-use TypeScript examples that demonstrate how to easily anchor documents to the Solana blockchain, verify their authenticity, and build automated tools using the SipHeron VDR SDK.
 
-## Execution Provisioning
+## 🚀 Getting Started
 
-Before initializing the evaluation instances, configure the execution binaries and inject your institutional state keys:
+If you want to run these examples locally right out of the box, make sure you have `ts-node` installed:
 
 ```bash
-npm install
-export SIPHERON_API_KEY="YOUR_INSTITUTIONAL_KEY"
-
-# Execute a parameterized runtime model
-npx ts-node examples/basic-anchor.ts
+# Install local execution dependencies temporarily
+npm install ts-node typescript @types/node dotenv chokidar --no-save
 ```
 
-## Implemented Process Architectures
+You can run any of the standalone scripts using `ts-node`.
 
-| Executable Model | Architectural Concept |
-| ---- | ----------- |
-| `basic-anchor.ts` | Foundational implementation of the zero-trust state boundary anchoring procedure. Demonstrates local-only buffer processing. |
-| `basic-verify.ts` | Verification topology executing cryptographic digest matching against immutable network states. |
-| `verify-from-hash.ts` | Memory-efficient scalar validation pipeline operating precisely on pre-computed hexadecimal `sha256` digest outputs. |
-| `batch-anchor.ts` | High-throughput concurrent imprinting leveraging geometric exponential retry logic networks for large dataset scale. |
-| `webhook-listener.ts` | Scalable daemon processor configured to explicitly parse structural webhook anomalies and PoH immutability events. |
-| `independent-verify.ts` | Procedural demonstration isolating the mathematical independence of the proof systems completely outside the active SipHeron framework ecosystem. |
+```bash
+# Example: Run the basic anchoring script
+npx ts-node basic-anchor.ts
+```
+
+> **🔑 Note on API Keys:** The `devnet` network (Playground mode) allows you to anchor and verify files completely for **free without an API key**. For production use on `mainnet`, you can obtain your free API key at [app.sipheron.com](https://app.sipheron.com).
 
 ---
 
-### Key Requirements Parameter
+## 📂 Included Examples
 
-SipHeron maintains a robust developer infrastructure allocation. The initial API provisioning provides **100 anchor/month limits** with no financial barrier constraints. 
+| Example File | Description |
+| ---- | ----------- |
+| `basic-anchor.ts` | The foundational implementation of zero-knowledge anchoring. Demonstrates hashing a real file and anchoring it on-chain. |
+| `basic-verify.ts` | Verifies a local file against the Solana blockchain, proving mathematically it has not been tampered with. |
+| `verify-from-hash.ts` | Memory-efficient verification that operates on a pre-computed SHA-256 hash instead of reading a physical file. |
+| `batch-anchor.ts` | High-throughput concurrent anchoring tool for establishing proof-of-existence for large datasets at once. |
+| `webhook-listener.ts` | A scalable Express.js server that listens for asynchronous SipHeron webhook events and processes transaction receipts. |
+| `independent-verify.ts` | A pure cryptographic demonstration proving you can verify SipHeron anchors without relying on our API at all, by directly querying the Solana blockchain. |
+| **`watch-folder/`** | **🌟 (Recommended)** A complete, automated application. Drag and drop PDFs into a `watch-folder` to instantly auto-anchor them to Solana and generate timestamped receipt ledgers! |
 
-To provision your operational keys, interface with the [Computational Portal Gateway](https://app.sipheron.com).
+---
+
+## 📚 Need More Help?
+
+Check out our official developer documentation at [docs.sipheron.com](https://docs.sipheron.com) for deep dives into zero-knowledge hashing, rate limits, and our custom Solana smart contracts.

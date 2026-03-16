@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios'
+import http from 'http'
+import https from 'https'
 import type { ResolvedConfig } from './config'
 import {
   AuthenticationError,
@@ -11,18 +13,19 @@ import {
 } from '../errors'
 
 export function createHttpClient(config: ResolvedConfig): AxiosInstance {
-  const client = axios.create({
+  const instance = axios.create({
     baseURL: config.baseUrl,
     timeout: config.timeout,
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': config.apiKey,
-      'User-Agent': `@sipheron/vdr-core/0.1.0 Node/${process.version}`,
+      'User-Agent': '@sipheron/vdr-core/0.1.0 Node/' + process.version,
     },
+    httpsAgent: new https.Agent({ family: 4 }),
+    httpAgent: new http.Agent({ family: 4 }),
   })
 
   // Response interceptor — map HTTP errors to typed SipHeron errors
-  client.interceptors.response.use(
+  instance.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
       if (!error.response) {
@@ -83,7 +86,7 @@ export function createHttpClient(config: ResolvedConfig): AxiosInstance {
     }
   )
 
-  return client
+  return instance
 }
 
 /**

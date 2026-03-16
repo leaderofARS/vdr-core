@@ -17,7 +17,7 @@ export const DEFAULTS = {
 } as const
 
 export interface ResolvedConfig {
-  apiKey: string
+  apiKey?: string
   network: NetworkType
   timeout: number
   retries: number
@@ -28,16 +28,16 @@ export interface ResolvedConfig {
 }
 
 export function resolveConfig(config: SipHeronConfig): ResolvedConfig {
-  if (!config.apiKey || typeof config.apiKey !== 'string') {
+  const network = config.network ?? DEFAULTS.network
+
+  if (network === 'mainnet' && (!config.apiKey || typeof config.apiKey !== 'string')) {
     throw new Error(
-      'apiKey is required. Get your free API key at https://app.sipheron.com'
+      'apiKey is required for mainnet. Get your free API key at https://app.sipheron.com'
     )
   }
 
-  const network = config.network ?? DEFAULTS.network
-
   return {
-    apiKey: config.apiKey.trim(),
+    apiKey: config.apiKey?.trim(),
     network,
     timeout: config.timeout ?? DEFAULTS.timeout,
     retries: config.retries ?? DEFAULTS.retries,

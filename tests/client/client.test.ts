@@ -3,8 +3,8 @@ import { SipHeron } from '../../src/client'
 import { ValidationError } from '../../src/errors'
 
 describe('SipHeron constructor', () => {
-  it('throws if apiKey is missing', () => {
-    expect(() => new SipHeron({ apiKey: '' })).toThrow()
+  it('throws if apiKey is missing for mainnet', () => {
+    expect(() => new SipHeron({ apiKey: '', network: 'mainnet' })).toThrow()
   })
 
   it('uses devnet as default network', () => {

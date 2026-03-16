@@ -12,7 +12,7 @@ import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
 import type { ResolvedConfig } from './config'
 import { createHttpClient, withRetry } from './http'
 import { hashDocument, isValidHash, normalizeHash } from '../hash'
-import { ValidationError, AnchorNotFoundError, AnchorRevokedError } from '../errors'
+import { ValidationError, AnchorNotFoundError, AnchorRevokedError, AuthenticationError } from '../errors'
 
 /**
  * Main SipHeron VDR client.
@@ -85,10 +85,17 @@ export class SipHeron {
       headers['Idempotency-Key'] = options.idempotencyKey
     }
 
+    if (!this.config.apiKey && this.config.network !== 'devnet') {
+      throw new AuthenticationError('apiKey is required to anchor on mainnet.')
+    }
+
+    const endpoint = !this.config.apiKey ? '/api/playground/anchor' : '/api/hashes'
+
     // Post to API
     const response = await withRetry(
-      () => this.http.post('/api/hashes', {
+      () => this.http.post(endpoint, {
         hash,
+        filename: options.name || options.metadata?.name || null,
         metadata: options.name || options.metadata?.name || null,
         ...(options.metadata && { tags: Object.keys(options.metadata) }),
       }, { headers }),
@@ -106,6 +113,9 @@ export class SipHeron {
    * @returns BatchAnchorResult with individual results
    */
   async anchorBatch(options: BatchAnchorOptions): Promise<BatchAnchorResult> {
+    if (!this.config.apiKey) {
+      throw new AuthenticationError('apiKey is required for batch anchoring. Use single anchor() for devnet playground.')
+    }
     if (!options.documents || options.documents.length === 0) {
       throw new ValidationError('documents array cannot be empty')
     }
@@ -176,8 +186,10 @@ export class SipHeron {
       }
     }
 
+    const endpoint = !this.config.apiKey ? '/api/playground/verify' : '/api/verify'
+
     const response = await withRetry(
-      () => this.http.post('/api/verify', { hash }),
+      () => this.http.post(endpoint, { hash }),
       this.config.retries
     )
 
@@ -214,8 +226,12 @@ export class SipHeron {
       throw new ValidationError('Invalid hash format.')
     }
 
+    const endpoint = !this.config.apiKey 
+        ? `/api/hashes/public/${normalized}` 
+        : `/api/hashes/${normalized}/status`
+
     const response = await withRetry(
-      () => this.http.get(`/api/hashes/${normalized}/status`),
+      () => this.http.get(endpoint),
       this.config.retries
     )
 
@@ -233,6 +249,10 @@ export class SipHeron {
     status?: string
     search?: string
   }): Promise<{ records: AnchorResult[]; total: number; page: number; pages: number }> {
+    if (!this.config.apiKey) {
+      throw new AuthenticationError('apiKey is required to list hashes.')
+    }
+
     const params = new URLSearchParams()
     if (options?.page) params.set('page', String(options.page))
     if (options?.limit) params.set('limit', String(options.limit))

@@ -1,8 +1,8 @@
 export type NetworkType = 'devnet' | 'mainnet'
 
 export interface SipHeronConfig {
-  /** Your SipHeron API key. Get one free at app.sipheron.com */
-  apiKey: string
+  /** Your SipHeron API key (optional on devnet). Get one free at app.sipheron.com */
+  apiKey?: string
   /** Solana network. Default: 'devnet' */
   network?: NetworkType
   /** Request timeout in milliseconds. Default: 30000 */
