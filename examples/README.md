@@ -35,6 +35,7 @@ npx ts-node basic-anchor.ts
 | `webhook-listener.ts` | A scalable Express.js server that listens for asynchronous SipHeron webhook events and processes transaction receipts. |
 | `independent-verify.ts` | A pure cryptographic demonstration proving you can verify SipHeron anchors without relying on our API at all, by directly querying the Solana blockchain. |
 | **`watch-folder/`** | **🌟 (Recommended)** A complete, automated application. Drag and drop PDFs into a `watch-folder` to instantly auto-anchor them to Solana and generate timestamped receipt ledgers! |
+| **`vdr-studio/`** | **🔥 (New)** A full-stack interactive web application demonstrating `vdr-core` in action using Express.js and Vanilla JS/CSS. Drag and drop files to hash, trace PDAs, verify securely via RPC, and broadcast directly! |
 
 ---
 

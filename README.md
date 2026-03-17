@@ -160,6 +160,20 @@ try {
 
 ---
 
+## Interactive Studio Example
+
+If you want to fully test the direct engine visually, we built a stunning Interactive Studio directly into our `examples` directory:
+
+```bash
+cd examples/vdr-studio
+npm install
+node server.js
+```
+
+Navigate to `http://localhost:3050` to drag-and-drop secure documents, generate PDAs, hash completely client-side, and directly verify/anchor to Solana.
+
+---
+
 ## Building
 
 ```bash
