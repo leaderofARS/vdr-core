@@ -1,4 +1,4 @@
-# 🔧 SipHeron VDR Architectural Contributions
+# CONTRIBUTING -SipHeron
 
 The `@sipheron/vdr-core` execution framework invites rigorous operational improvements from the broader cryptographic engineering ecosystem. 
 
