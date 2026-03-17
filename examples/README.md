@@ -1,10 +1,10 @@
-# 🦅 SipHeron VDR — Quickstart Examples
+# SipHeron VDR — Quickstart Examples
 
 Welcome! These examples were automatically extracted into your project workspace when you ran `npm install @sipheron/vdr-core`. 
 
 This folder contains heavily-typed, ready-to-use TypeScript examples that demonstrate how to easily anchor documents to the Solana blockchain, verify their authenticity, and build automated tools using the SipHeron VDR SDK.
 
-## 🚀 Getting Started
+##  Getting Started
 
 If you want to run these examples locally right out of the box, make sure you have `ts-node` installed:
 
@@ -20,11 +20,11 @@ You can run any of the standalone scripts using `ts-node`.
 npx ts-node basic-anchor.ts
 ```
 
-> **🔑 Note on API Keys:** The `devnet` network (Playground mode) allows you to anchor and verify files completely for **free without an API key**. For production use on `mainnet`, you can obtain your free API key at [app.sipheron.com](https://app.sipheron.com).
+> ** Note on API Keys:** The `devnet` network (Playground mode) allows you to anchor and verify files completely for **free without an API key**. For production use on `mainnet`, you can obtain your API key at [app.sipheron.com](https://app.sipheron.com).
 
 ---
 
-## 📂 Included Examples
+##  Included Examples
 
 | Example File | Description |
 | ---- | ----------- |
@@ -34,11 +34,11 @@ npx ts-node basic-anchor.ts
 | `batch-anchor.ts` | High-throughput concurrent anchoring tool for establishing proof-of-existence for large datasets at once. |
 | `webhook-listener.ts` | A scalable Express.js server that listens for asynchronous SipHeron webhook events and processes transaction receipts. |
 | `independent-verify.ts` | A pure cryptographic demonstration proving you can verify SipHeron anchors without relying on our API at all, by directly querying the Solana blockchain. |
-| **`watch-folder/`** | **🌟 (Recommended)** A complete, automated application. Drag and drop PDFs into a `watch-folder` to instantly auto-anchor them to Solana and generate timestamped receipt ledgers! |
-| **`vdr-studio/`** | **🔥 (New)** A full-stack interactive web application demonstrating `vdr-core` in action using Express.js and Vanilla JS/CSS. Drag and drop files to hash, trace PDAs, verify securely via RPC, and broadcast directly! |
+| **`watch-folder/`** | ** (Recommended)** A complete, automated application. Drag and drop PDFs into a `watch-folder` to instantly auto-anchor them to Solana and generate timestamped receipt ledgers! |
+| **`vdr-studio/`** | ** (New)** A full-stack interactive web application demonstrating `vdr-core` in action using Express.js and Vanilla JS/CSS. Drag and drop files to hash, trace PDAs, verify securely via RPC, and broadcast directly! |
 
 ---
 
 ## 📚 Need More Help?
 
-Check out our official developer documentation at [docs.sipheron.com](https://docs.sipheron.com) for deep dives into zero-knowledge hashing, rate limits, and our custom Solana smart contracts.
+Check out our official developer documentation at [app.sipheron.com/docs](https://app.sipheron.com/docs) for deep dives into zero-knowledge hashing, rate limits, and our custom Solana smart contracts.
