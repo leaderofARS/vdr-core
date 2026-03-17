@@ -1,4 +1,4 @@
-# 🛡️ Security Protocol & Vulnerability Threat Model
+#  Security Protocol & Vulnerability Threat Model
 
 ## 1. Zero-Trust Local Extrapolation
 
