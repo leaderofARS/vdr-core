@@ -73,8 +73,12 @@ export async function anchorToSolana(options: DirectAnchorOptions): Promise<Dire
 
   try {
     // We need to fetch the treasury public key from the protocol config
-    const config = await program.account.protocolConfig.fetch(protocolConfigPda)
-    const treasury = config.treasury as PublicKey
+    // Raw fetch bypasses IDL size mismatches between devnet/mainnet versions during upgrades
+    const accountInfo = await connection.getAccountInfo(protocolConfigPda)
+    if (!accountInfo) throw new Error('Protocol config not found on-chain')
+    
+    // discriminator (8) + admin (32) + fee (8) = 48 -> treasury starts at 48
+    const treasury = new PublicKey(accountInfo.data.slice(48, 80))
 
     const txSig = await program.methods
       .registerHash(hashArray, metadata, new anchor.BN(0)) // 0 means no expiry
