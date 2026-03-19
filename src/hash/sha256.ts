@@ -95,6 +95,61 @@ export async function hashFile(filePath: string): Promise<string> {
 }
 
 /**
+ * Hash a file using streaming — handles files of any size
+ * without loading entire file into memory.
+ * Memory usage: O(chunk size) not O(file size)
+ */
+export async function hashFileStream(filePath: string): Promise<string> {
+  if (typeof globalThis !== 'undefined' && (globalThis as any).window !== undefined) {
+    throw new Error('hashFileStream is only available in Node.js environments.')
+  }
+  const { createReadStream } = await import('fs')
+  
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256')
+    const stream = createReadStream(filePath, {
+      highWaterMark: 64 * 1024 // 64KB chunks
+    })
+
+    stream.on('data', (chunk) => hash.update(chunk))
+    stream.on('end', () => resolve(hash.digest('hex')))
+    stream.on('error', reject)
+  })
+}
+
+/**
+ * Hash with progress reporting for large files.
+ * onProgress receives bytes processed and total bytes.
+ */
+export async function hashFileWithProgress(
+  filePath: string,
+  onProgress?: (bytesProcessed: number, totalBytes: number) => void
+): Promise<string> {
+  if (typeof globalThis !== 'undefined' && (globalThis as any).window !== undefined) {
+    throw new Error('hashFileWithProgress is only available in Node.js environments.')
+  }
+  const { statSync, createReadStream } = await import('fs')
+  
+  const totalBytes = statSync(filePath).size
+  let bytesProcessed = 0
+
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256')
+    const stream = createReadStream(filePath, {
+      highWaterMark: 64 * 1024
+    })
+
+    stream.on('data', (chunk) => {
+      hash.update(chunk)
+      bytesProcessed += chunk.length
+      onProgress?.(bytesProcessed, totalBytes)
+    })
+    stream.on('end', () => resolve(hash.digest('hex')))
+    stream.on('error', reject)
+  })
+}
+
+/**
  * Compute SHA-256 hash of a string to handle Base64 properly.
  *
  * @param base64 - Base64 encoded document string
