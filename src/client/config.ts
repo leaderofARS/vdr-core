@@ -1,3 +1,28 @@
+/**
+ * @module client/config
+ *
+ * @description
+ * Configuration resolution and URL-builder utilities for the `SipHeron` client.
+ *
+ * ## Responsibilities
+ * - Merges caller-supplied `SipHeronConfig` with library defaults into a fully
+ *   resolved `ResolvedConfig` object used throughout the HTTP layer.
+ * - Validates that `apiKey` is present when targeting mainnet (enforced at
+ *   construction time so errors surface immediately).
+ * - Provides URL helpers used to construct verificationUrl and explorerUrl
+ *   fields in `AnchorResult` objects.
+ *
+ * ## Default values
+ * | Config key   | Default                          |
+ * |--------------|----------------------------------|
+ * | `network`    | `'devnet'`                       |
+ * | `timeout`    | `30 000` ms                      |
+ * | `retries`    | `3`                              |
+ * | `baseUrl`    | `https://api.sipheron.com`       |
+ * | `appUrl`     | `https://app.sipheron.com`       |
+ *
+ * @internal
+ */
 import type { SipHeronConfig, NetworkType } from '../types'
 
 export const DEFAULTS = {

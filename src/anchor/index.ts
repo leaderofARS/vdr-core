@@ -1,3 +1,20 @@
+/**
+ * @module anchor
+ *
+ * @description
+ * Public barrel for the `anchor` sub-system.
+ *
+ * Re-exports all anchoring primitives in one place so internal
+ * modules and external consumers can import from `'../anchor'`
+ * without knowing the internal file structure.
+ *
+ * ### Exported groups
+ * - **Anchor helpers** (`anchor.ts`) — `prepareAnchor`, `mapToAnchorResult`
+ * - **Direct on-chain** (`direct.ts`) — `anchorToSolana`, `DirectAnchorOptions`, `DirectAnchorResult`
+ * - **Confirmation** (`confirm.ts`) — confirmation level constants and polling utility
+ * - **Solana utilities** (`solana.ts`) — network URLs, program IDs, explorer helpers
+ */
+
 export { hashDocument, prepareAnchor, mapToAnchorResult } from './anchor'
 export { anchorToSolana } from './direct'
 export type { DirectAnchorOptions, DirectAnchorResult } from './direct'

@@ -1,18 +1,34 @@
 /**
- * Solana-specific utilities for the vdr-core library.
- * Includes explicit program constants.
+ * @module anchor/solana
+ *
+ * @description
+ * Solana-specific constants and utility functions for the VDR SDK.
+ *
+ * This module is a **pure utility layer** — it does not send any transactions
+ * or manage private keys. All signing happens in `anchor/direct.ts` using the
+ * caller-supplied `Keypair`.
+ *
+ * ## Constants
+ * | Name                     | Value / Description                                        |
+ * |--------------------------|------------------------------------------------------------|
+ * | `SOLANA_NETWORKS`        | Public RPC endpoints for devnet and mainnet.               |
+ * | `SIPHERON_PROGRAM_ID`    | `PublicKey` map keyed by network for the VDR contract.     |
+ * | `SIPHERON_CONTRACT`      | Base58 string of the deployed program address.             |
+ * | `ANCHOR_SEED`            | PDA seed string prefix (`'anchor'`).                       |
+ * | `PROTOCOL_VERSION`       | Current on-chain protocol version integer.                 |
+ * | `MAX_BATCH_SIZE`         | Maximum documents per batch anchor call (500).             |
+ * | `HASH_LENGTH`            | Required SHA-256 hex digest length (64 chars).             |
+ * | `CONFIRMATION_DEPTH`     | Enterprise confirmation block depth (32).                  |
+ * | `EXPLORER_URLS`          | Helper functions for Solana Explorer deep-links.           |
+ *
+ * ## Functions
+ * - `getExplorerUrl(txSig, network)` — Build a Solana Explorer URL for a transaction.
+ * - `isValidTxSignature(sig)`        — Validate base58 tx signature format.
+ * - `estimateAnchorCost()`           — Return estimated lamport cost per anchor.
  */
+
 
 import { PublicKey } from '@solana/web3.js'
-
-/**
- * Note: This module provides utilities for working with Solana
- * transaction data — it does NOT handle transaction signing
- * or wallet key management. Those operations happen server-side
- * in the SipHeron platform.
- *
- * For direct Solana integration, use the SipHeron API.
- */
 
 export const SOLANA_NETWORKS = {
   devnet:  'https://api.devnet.solana.com',

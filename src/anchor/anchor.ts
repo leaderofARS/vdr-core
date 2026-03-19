@@ -1,13 +1,21 @@
 /**
- * Core anchoring logic exposed as standalone functions.
- * These functions use the SipHeron HTTP API to anchor documents.
+ * @module anchor/anchor
  *
- * For most use cases, use the SipHeron client class instead:
- *   const sipheron = new SipHeron({ apiKey })
- *   await sipheron.anchor({ file })
+ * @description
+ * Core anchoring helpers used internally by the `SipHeron` client.
+ * These are the pure utility functions that prepare, validate, and map
+ * anchor data — they contain no HTTP logic themselves.
  *
- * These standalone functions are for advanced use cases where
- * you need more control over the anchoring process.
+ * ## Contents
+ * - `prepareAnchor(options)`  — Normalises `AnchorOptions` into a `{ hash, metadata }` object.
+ *   Hashes the file locally if a Buffer is provided; validates the format if a raw hash string
+ *   is provided. The document bytes are **never** transmitted.
+ * - `mapToAnchorResult(data)` — Maps a raw API response object to the typed `AnchorResult`.
+ * - `hashDocument`            — Re-exported for convenience in anchor workflows.
+ *
+ * @internal
+ * This module is not part of the public API surface — consumers should use
+ * the `SipHeron` client class or the standalone functions from `@sipheron/vdr-core` directly.
  */
 
 import { hashDocument, isValidHash, normalizeHash } from '../hash'

@@ -1,3 +1,42 @@
+/**
+ * @module types/events
+ *
+ * @description
+ * TypeScript type definitions for SipHeron webhook events.
+ *
+ * When you configure a webhook endpoint in the SipHeron dashboard, the platform
+ * sends signed HTTP POST requests for each event. Use `parseWebhookEvent()` from
+ * `@sipheron/vdr-core` to verify the HMAC signature and deserialise the payload
+ * into one of the typed event interfaces defined here.
+ *
+ * ## Event types
+ * | `WebhookEventType`          | Trigger                                                   |
+ * |-----------------------------|-----------------------------------------------------------|
+ * | `anchor.created`            | A new anchor request was received.                        |
+ * | `anchor.confirmed`          | The Solana transaction reached the confirmation threshold.|
+ * | `anchor.failed`             | The transaction was rejected or dropped.                  |
+ * | `verification.performed`    | Someone verified a document against an anchor.            |
+ * | `anomaly.detected`          | Unusually high verification frequency was detected.       |
+ * | `quota.warning`             | Monthly anchor quota is approaching the plan limit.       |
+ * | `quota.exceeded`            | Monthly quota has been fully consumed.                    |
+ * | `certificate.generated`     | A PDF certificate was generated for an anchor.            |
+ *
+ * ## Base envelope
+ * Every event is wrapped in `WebhookEvent<T>` with `id`, `event`, `created`,
+ * and a `data` field typed to the specific event payload interface.
+ *
+ * @example
+ * ```ts
+ * import { parseWebhookEvent, AnchorConfirmedEvent, WebhookEvent } from '@sipheron/vdr-core'
+ *
+ * const event = parseWebhookEvent({ body: rawBody, signature, secret })
+ *
+ * if (event.event === 'anchor.confirmed') {
+ *   const data = event.data as AnchorConfirmedEvent
+ *   console.log('Confirmed tx:', data.txSignature)
+ * }
+ * ```
+ */
 export type WebhookEventType =
   | 'anchor.created'
   | 'anchor.confirmed'

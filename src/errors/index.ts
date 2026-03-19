@@ -1,3 +1,13 @@
+/**
+ * @module errors
+ *
+ * @description
+ * Public barrel for the error class hierarchy.
+ * Re-exports all typed error classes from `errors.ts` so consumers
+ * can catch them by name without knowing the internal file structure.
+ *
+ * @see {@link module:errors/errors} for the full class hierarchy and usage examples.
+ */
 export {
   SipHeronError,
   AuthenticationError,

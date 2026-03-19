@@ -1,3 +1,38 @@
+/**
+ * @module verify/verify
+ *
+ * @description
+ * Document verification functions — local and hosted API modes.
+ *
+ * ## `verifyLocally(fileOrHash, anchorHash)`
+ * Fully offline comparison with **no network call**.
+ * - Accepts either a document `Buffer` (hashed locally) or a pre-computed hash string.
+ * - Compares against a known `anchorHash` using constant-time equality (`crypto.timingSafeEqual`).
+ * - Returns `{ authentic, computedHash, anchorHash }`.
+ * - Use this when you already retrieved the anchor record and want to check the document
+ *   without making a second round-trip to the API.
+ *
+ * ## `verifyHashStandalone(hash, apiBaseUrl?)`
+ * Calls the SipHeron public `/api/verify` endpoint without authentication.
+ * - No API key required.
+ * - `apiBaseUrl` defaults to `https://api.sipheron.com` but can be overridden
+ *   for self-hosted deployments.
+ * - Returns a full `VerificationResult`.
+ *
+ * @example
+ * ```ts
+ * import { verifyLocally, verifyHashStandalone } from '@sipheron/vdr-core'
+ * import fs from 'fs'
+ *
+ * // Pure local — no network
+ * const local = await verifyLocally(fs.readFileSync('./contract.pdf'), knownAnchorHash)
+ * console.log(local.authentic) // true / false
+ *
+ * // API check — no API key needed
+ * const result = await verifyHashStandalone(documentHash)
+ * console.log(result.status) // 'authentic' | 'not_found' | 'revoked' | 'pending'
+ * ```
+ */
 import { hashDocument, isValidHash, normalizeHash } from '../hash'
 import { compareHashes } from './compare'
 import { ValidationError } from '../errors'

@@ -1,3 +1,25 @@
+/**
+ * @module types/config
+ *
+ * @description
+ * Public configuration types for the `SipHeron` client constructor.
+ *
+ * ### `NetworkType`
+ * `'devnet' | 'mainnet'` — which Solana cluster to target.
+ * - `'devnet'`  — test network; no API key required for playground endpoints.
+ * - `'mainnet'` — production network; API key **required**.
+ *
+ * ### `SipHeronConfig`
+ * Passed to `new SipHeron(config)`. All fields except `network` are optional.
+ *
+ * | Field     | Type     | Default                        | Description                         |
+ * |-----------|----------|--------------------------------|-------------------------------------|
+ * | `apiKey`  | string?  | `undefined`                    | Required for mainnet.               |
+ * | `network` | string?  | `'devnet'`                     | Solana cluster.                     |
+ * | `timeout` | number?  | `30000`                        | Request timeout in ms.              |
+ * | `retries` | number?  | `3`                            | Retry attempts on transient errors. |
+ * | `baseUrl` | string?  | `https://api.sipheron.com`     | Override for self-hosted instances. |
+ */
 export type NetworkType = 'devnet' | 'mainnet'
 
 export interface SipHeronConfig {

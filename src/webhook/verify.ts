@@ -1,3 +1,46 @@
+/**
+ * @module webhook/verify
+ *
+ * @description
+ * HMAC-SHA256 webhook signature verification for SipHeron platform events.
+ *
+ * When the SipHeron platform calls your webhook endpoint it sends a
+ * `X-SipHeron-Signature` header containing the HMAC-SHA256 of the raw request
+ * body, keyed with your webhook secret. **Always verify this signature before
+ * processing the event payload** to ensure the request is authentic and
+ * has not been tampered with in transit.
+ *
+ * ## Security guarantees
+ * - Uses `crypto.timingSafeEqual` — execution time is constant regardless of
+ *   where a byte mismatch occurs, preventing timing-based forgery attacks.
+ * - Signature comparison works on `Buffer` objects of identical length to
+ *   avoid implicit length-leaking comparisons.
+ *
+ * ## `verifyWebhookSignature(opts)`
+ * Low-level signature check — returns `true` / `false`.
+ * Use when you want to handle verification failure yourself.
+ *
+ * ## `parseWebhookEvent(opts)`
+ * All-in-one: verifies signature AND parses the JSON body.
+ * Throws `SipHeronError` (code: `WEBHOOK_SIGNATURE_INVALID`) on bad signature,
+ * or `ValidationError` if the body is not valid JSON.
+ *
+ * @example
+ * ```ts
+ * import express from 'express'
+ * import { parseWebhookEvent } from '@sipheron/vdr-core'
+ *
+ * app.post('/webhooks/sipheron', express.raw({ type: '*\/*' }), (req, res) => {
+ *   const event = parseWebhookEvent({
+ *     body: req.body.toString(),
+ *     signature: req.headers['x-sipheron-signature'] as string,
+ *     secret: process.env.SIPHERON_WEBHOOK_SECRET!,
+ *   })
+ *   console.log(event.event) // 'anchor.confirmed'
+ *   res.sendStatus(200)
+ * })
+ * ```
+ */
 import { createHmac, timingSafeEqual } from 'crypto'
 import { WebhookEvent } from '../types'
 import { SipHeronError, ValidationError } from '../errors'

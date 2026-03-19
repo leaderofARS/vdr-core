@@ -1,3 +1,28 @@
+/**
+ * @module types/verify
+ *
+ * @description
+ * TypeScript type definitions for verification operations.
+ *
+ * ## Types
+ *
+ * ### `VerifyOptions`
+ * Input to `sipheron.verify()` or `verifyHashStandalone()`.
+ * Supply **either** `file` (hashed locally and never transmitted) **or** a
+ * pre-computed `hash` string — never both.
+ *
+ * ### `VerificationStatus`
+ * The detailed outcome of a verification attempt:
+ * - `'authentic'`  — Hash found on-chain AND anchor status is `'confirmed'`.
+ * - `'mismatch'`   — A record exists but the hash does not match.
+ * - `'not_found'`  — No anchor record found for this hash.
+ * - `'revoked'`    — Anchor exists but has been explicitly revoked.
+ * - `'pending'`    — Anchor exists but transaction not yet confirmed.
+ *
+ * ### `VerificationResult`
+ * Return value of all `verify*` methods. The boolean `authentic` field is the
+ * fast-path check; inspect `status` for the full picture.
+ */
 import type { AnchorResult } from './anchor'
 
 export interface VerifyOptions {

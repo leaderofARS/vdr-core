@@ -1,6 +1,25 @@
 /**
- * Confirmation depth utilities.
- * Defines what "confirmed" means in terms of Solana commitments.
+ * @module anchor/confirm
+ *
+ * @description
+ * Solana confirmation-depth utilities.
+ *
+ * Solana has three commitment levels that describe how "final" a block is:
+ *
+ * | Level       | Meaning                                                         |
+ * |-------------|-----------------------------------------------------------------|
+ * | `processed` | Block has been processed by this node but not yet voted on.     |
+ * | `confirmed` | Supermajority of validators voted on this block. ✅ Default.   |
+ * | `finalized` | Block reached maximum lockout — economically irreversible. 🔒  |
+ *
+ * ## Contents
+ * - `ConfirmationLevel`       — Union type of the three commitment levels.
+ * - `DEFAULT_CONFIRMATION`    — `'confirmed'` — safe for most applications.
+ * - `MIN_CONFIRMATIONS`       — Minimum block count before treating as permanent.
+ * - `ENTERPRISE_CONFIRMATIONS`— Depth threshold for high-value document use cases.
+ * - `isConfirmed(status)`     — Returns `true` when status === `'confirmed'`.
+ * - `isTerminal(status)`      — Returns `true` when no further state change is expected.
+ * - `pollForConfirmation(fn)` — Polls with exponential backoff until terminal status.
  */
 
 export type ConfirmationLevel = 'processed' | 'confirmed' | 'finalized'

@@ -1,3 +1,34 @@
+/**
+ * @module client/client
+ *
+ * @description
+ * The `SipHeron` class — the primary entry point for the **hosted platform** mode.
+ *
+ * Wraps all SipHeron REST API endpoints behind a clean, typed interface.
+ * Document hashing **always happens client-side** before any network call;
+ * raw document bytes are never transmitted.
+ *
+ * ### Instantiation
+ * ```ts
+ * // Devnet (no API key needed for playground endpoints)
+ * const sipheron = new SipHeron({ network: 'devnet' })
+ *
+ * // Mainnet (API key required)
+ * const sipheron = new SipHeron({ apiKey: process.env.SIPHERON_API_KEY, network: 'mainnet' })
+ * ```
+ *
+ * ### Key methods
+ * | Method            | Description                                              |
+ * |-------------------|----------------------------------------------------------|
+ * | `anchor(opts)`    | Hash locally then POST to `/api/hashes` (or playground).|
+ * | `anchorBatch(opt)`| Anchor up to 500 documents; requires API key.            |
+ * | `verify(opts)`    | Hash locally then POST to `/api/verify`.                 |
+ * | `verifyHash(hash)`| Verify by pre-computed hash — no file provided.          |
+ * | `getStatus(hash)` | Fetch current anchor status by hash.                     |
+ * | `list(opts)`      | List all anchors for the authenticated organisation.     |
+ *
+ * @see {@link SipHeronConfig} for constructor options.
+ */
 import type { AxiosInstance } from 'axios'
 import type { SipHeronConfig } from '../types'
 import type {

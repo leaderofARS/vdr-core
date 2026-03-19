@@ -1,3 +1,31 @@
+/**
+ * @module types/anchor
+ *
+ * @description
+ * TypeScript type definitions for anchoring operations.
+ *
+ * ## Types
+ *
+ * ### `AnchorStatus`
+ * Union of possible anchor lifecycle states:
+ * - `'pending'`   — Transaction submitted, awaiting Solana confirmation.
+ * - `'confirmed'` — Supermajority of validators have voted on this block.
+ * - `'failed'`    — Transaction was rejected or dropped.
+ * - `'revoked'`   — Anchor was explicitly revoked by the issuing organisation.
+ *
+ * ### `AnchorOptions`
+ * Input to `sipheron.anchor()` or `anchorToSolana()`. Supply **either** a
+ * `file` Buffer (hashed locally before transmission) **or** a pre-computed
+ * `hash` string — never both.
+ *
+ * ### `AnchorResult`
+ * Returned by all anchoring methods. Contains the transaction signature,
+ * PDA address, Solana Explorer URL, and a public verification URL.
+ *
+ * ### `BatchAnchorOptions` / `BatchAnchorResult`
+ * Used by `sipheron.anchorBatch()` to process up to 500 documents
+ * in a single call, with per-document success/failure tracking.
+ */
 export type AnchorStatus = 'pending' | 'confirmed' | 'failed' | 'revoked'
 
 export interface AnchorOptions {

@@ -1,3 +1,44 @@
+/**
+ * @module anchor/direct
+ *
+ * @description
+ * **Direct on-chain anchoring** — no SipHeron account or API key required.
+ *
+ * `anchorToSolana()` writes a document's SHA-256 hash directly to the Solana
+ * blockchain by invoking the SipHeron smart contract via JSON-RPC. The caller
+ * must supply their own funded Solana `Keypair`; the library constructs and
+ * broadcasts the transaction autonomously.
+ *
+ * ### How it works
+ * 1. Hash the document locally (or accept a pre-computed hash).
+ * 2. Derive two Program Derived Addresses (PDAs):
+ *    - `protocol_config` — reads the on-chain treasury address.
+ *    - `hash_record`     — the account that stores this document's fingerprint.
+ * 3. Call `program.methods.registerHash(hashArray, metadata, expiry)`.
+ * 4. Return the transaction signature, Solana Explorer URL, and PDA address.
+ *
+ * ### Custom program support
+ * Pass `programId` (base58 string) in the options to target your own
+ * deployed fork of the VDR smart contract instead of the default SipHeron one.
+ *
+ * @example
+ * ```ts
+ * import { anchorToSolana } from '@sipheron/vdr-core'
+ * import { Keypair } from '@solana/web3.js'
+ * import fs from 'fs'
+ *
+ * const keypair = Keypair.fromSecretKey(mySecretKeyBytes)
+ * const buffer  = fs.readFileSync('./contract.pdf')
+ *
+ * const result = await anchorToSolana({ buffer, keypair, network: 'mainnet' })
+ * console.log('PDA:', result.pda)
+ * console.log('Explorer:', result.explorerUrl)
+ * ```
+ *
+ * @see {@link DirectAnchorOptions} for the full options reference.
+ * @see {@link DirectAnchorResult}  for the return value shape.
+ */
+
 import * as anchor from '@coral-xyz/anchor'
 import { Keypair, Connection, PublicKey, SystemProgram } from '@solana/web3.js'
 import { hashDocument } from '../hash'
@@ -12,6 +53,13 @@ export interface DirectAnchorOptions {
   network: 'devnet' | 'mainnet'
   metadata?: string
   rpcUrl?: string
+  /**
+   * Override the Solana program ID to anchor against.
+   * Defaults to the SipHeron VDR contract: 6ecWPUK87zxwZP2pARJ75wbpCka92mYSGP1szrJxzAwo
+   * Supply your own base58 program address here if you have deployed
+   * a fork or a custom VDR program.
+   */
+  programId?: string
 }
 
 export interface DirectAnchorResult {
@@ -34,7 +82,7 @@ export interface DirectAnchorResult {
  * @returns Complete transaction details including the PDA address.
  */
 export async function anchorToSolana(options: DirectAnchorOptions): Promise<DirectAnchorResult> {
-  const { keypair, network, metadata = 'Direct Anchor via vdr-core', rpcUrl } = options
+  const { keypair, network, metadata = 'Direct Anchor via vdr-core', rpcUrl, programId: customProgramId } = options
 
   if (!options.hash && !options.buffer) {
     throw new ValidationError('Must provide either a hash or file buffer')
@@ -50,7 +98,9 @@ export async function anchorToSolana(options: DirectAnchorOptions): Promise<Dire
   const connectionUrl = rpcUrl || SOLANA_NETWORKS[network]
   const connection = new Connection(connectionUrl, 'confirmed')
 
-  const programId = SIPHERON_PROGRAM_ID[network]
+  const programId = customProgramId
+    ? new PublicKey(customProgramId)
+    : SIPHERON_PROGRAM_ID[network]
 
   const provider = new anchor.AnchorProvider(
     connection,

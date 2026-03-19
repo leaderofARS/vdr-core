@@ -1,3 +1,26 @@
+/**
+ * @module verify/compare
+ *
+ * @description
+ * Hash comparison primitives used in local and on-chain verification paths.
+ *
+ * ## Security design
+ * Both exported functions ultimately delegate to `constantTimeCompare()` in
+ * `hash/utils.ts`, which uses XOR-accumulation to ensure that execution time
+ * is constant regardless of **where** a mismatch occurs. This prevents
+ * side-channel timing attacks that could otherwise reveal partial hash values.
+ *
+ * ## Functions
+ * - `compareHashes(a, b)` — Normalises both hashes to lowercase and compares
+ *   them in constant time. Returns `true` only if they are byte-identical.
+ * - `verifyBuffer(file, expectedHash)` — Convenience wrapper that hashes a
+ *   document `Buffer` locally with SHA-256 and then calls `compareHashes`.
+ *   The document bytes are **never** transmitted.
+ *
+ * @internal
+ * Used internally by `verify/verify.ts` (`verifyLocally`). Not part of the
+ * primary public API surface.
+ */
 import { constantTimeCompare, normalizeHash } from '../hash'
 
 /**

@@ -1,20 +1,45 @@
 /**
- * @sipheron/vdr-core
+ * @module @sipheron/vdr-core
+ * @version 0.1.18
+ * @license Apache-2.0
  *
- * Core document verification library for SipHeron VDR.
- * Anchor any document's SHA-256 fingerprint permanently to Solana.
- * Verify authenticity anywhere, forever.
+ * @description
+ * The cryptographic engine of SipHeron VDR.
+ * Permanently anchor any document's SHA-256 fingerprint to the Solana
+ * blockchain and verify authenticity anywhere — forever.
  *
- * @example
- * import { SipHeron } from '@sipheron/vdr-core'
+ * This is the **library entry point**. It re-exports every public symbol
+ * from the sub-modules so consumers only need a single import path:
  *
- * const sipheron = new SipHeron({ apiKey: 'your-key', network: 'devnet' })
+ * ```ts
+ * import {
+ *   SipHeron,           // Hosted platform client (requires API key)
+ *   hashDocument,       // SHA-256 hashing — runs 100 % client-side
+ *   anchorToSolana,     // Direct on-chain write (no API key needed)
+ *   verifyOnChain,      // Direct on-chain read  (no API key needed)
+ *   deriveAnchorAddress // PDA derivation math
+ * } from '@sipheron/vdr-core'
+ * ```
  *
- * const anchor = await sipheron.anchor({ file, name: 'Contract v1' })
- * console.log(anchor.verificationUrl)
+ * ## Two Operating Modes
  *
- * const result = await sipheron.verify({ file })
- * console.log(result.authentic) // true
+ * ### DIRECT — no SipHeron account required
+ * Uses public Solana RPC nodes exclusively.
+ * - `hashDocument / hashFile / hashStream / hashBase64`
+ * - `anchorToSolana`  — write to Solana directly with your own Keypair
+ * - `verifyOnChain`   — read from Solana directly
+ * - `deriveAnchorAddress` — compute the PDA for any hash + owner pair
+ * - `verifyLocally`   — constant-time local comparison (no network)
+ *
+ * ### HOSTED — managed SipHeron platform (API key required for mainnet)
+ * Adds managed analytics, PDF certificates, compliance exports, etc.
+ * - `new SipHeron({ apiKey, network })`
+ * - `sipheron.anchor()` / `sipheron.anchorBatch()`
+ * - `sipheron.verify()` / `sipheron.verifyHash()`
+ * - `sipheron.list()` / `sipheron.getStatus()`
+ *
+ * @see {@link https://app.sipheron.com} SipHeron Dashboard
+ * @see {@link https://github.com/SipHeron-VDR/vdr-core} Source Repository
  */
 
 // ── Main client ──

@@ -1,14 +1,40 @@
 /**
- * Certificate generation utilities.
+ * @module certificate/generate
  *
- * This module provides types and helpers for certificate data.
- * Full PDF generation requires the @sipheron/vdr-core server-side
- * package or the SipHeron API endpoint:
- *   GET /api/hashes/:hash/certificate
+ * @description
+ * Certificate data preparation and URL utilities for the SipHeron VDR platform.
  *
- * In browser environments, use the API endpoint directly.
- * In Node.js environments with pdfkit installed, the full
- * PDF generation is available via the SipHeron platform.
+ * A **SipHeron VDR Certificate** is a PDF document that proves a specific file
+ * was cryptographically anchored to the Solana blockchain at a recorded timestamp.
+ * It is suitable for legal compliance workflows, audit trails, and sharing with
+ * third parties who need to verify document authenticity without accessing Solana
+ * directly.
+ *
+ * > **Note:** Full PDF generation (binary rendering) requires either the SipHeron
+ * > hosted API (`GET /api/hashes/:hash/certificate`) or a server-side PDF library
+ * > (e.g. `pdfkit`). This module provides the **data layer** only — types and pure
+ * > functions that prepare, build, and describe certificate payloads.
+ *
+ * ## Functions
+ * - `generateCertificateId(anchor)` — Deterministic `CERT-<16 hex chars>` ID derived
+ *   from `hash + timestamp`. The same anchor always produces the same certificate ID,
+ *   allowing tamper-detection of the certificate itself.
+ * - `buildCertificateUrl(hash, apiBaseUrl?, isPublic?)` — Constructs the SipHeron API
+ *   download URL. `isPublic = true` (default) hits an unauthenticated endpoint.
+ * - `prepareCertificateData(anchor, org)` — Assembles a `CertificateData` object
+ *   ready for passing to a PDF renderer or API call.
+ * - `getCertificateProofText(orgName, hash)` — Returns the formal legal text paragraph
+ *   used on the face of every certificate.
+ *
+ * ## `CertificateData` interface
+ * | Field                   | Description                                    |
+ * |-------------------------|------------------------------------------------|
+ * | `anchor`                | Full `AnchorResult` record.                    |
+ * | `organizationName`      | Name printed on the certificate.               |
+ * | `organizationWebsite`   | Optional URL for white-label branding.         |
+ * | `organizationLogoUrl`   | Optional logo URL for white-label branding.    |
+ * | `issuedAt`              | ISO 8601 generation timestamp.                 |
+ * | `certificateId`         | Deterministic `CERT-*` ID (see above).         |
  */
 
 import type { AnchorResult } from '../types'

@@ -1,3 +1,44 @@
+/**
+ * @module hash/sha256
+ *
+ * @description
+ * SHA-256 hashing utilities — the cryptographic foundation of the VDR SDK.
+ *
+ * All hashing runs **100 % locally** using Node.js's built-in `crypto` module.
+ * Document bytes are never transmitted to any server; only the resulting
+ * 64-character hex digest is used for anchoring and verification.
+ *
+ * ## Functions
+ * | Function            | Environment  | Input            |
+ * |---------------------|--------------|------------------|
+ * | `hashDocument(buf)` | Node + Browser | `Buffer`         |
+ * | `hashFile(path)`    | Node only    | filesystem path  |
+ * | `hashStream(stream)`| Node + Browser | readable stream |
+ * | `hashBase64(b64)`   | Node + Browser | Base64 string   |
+ * | `isValidHash(h)`    | —            | any string       |
+ * | `normalizeHash(h)`  | —            | any string       |
+ *
+ * ## Security properties
+ * - **Non-reversible** — SHA-256 is a one-way function; the document cannot
+ *   be recovered from its hash.
+ * - **Collision-resistant** — probability of two different documents sharing
+ *   the same hash is negligible (2⁻²⁵⁶).
+ * - **Deterministic** — the same document always produces the same hash.
+ *
+ * @example
+ * ```ts
+ * import { hashDocument, hashFile } from '@sipheron/vdr-core'
+ * import fs from 'fs'
+ *
+ * // From a Buffer (browser or Node)
+ * const hash1 = await hashDocument(fs.readFileSync('./contract.pdf'))
+ *
+ * // From a file path (Node only)
+ * const hash2 = await hashFile('./contract.pdf')
+ *
+ * console.log(hash1 === hash2) // true
+ * ```
+ */
 import { createHash } from 'crypto'
 import { ValidationError } from '../errors'
 

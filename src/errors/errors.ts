@@ -1,4 +1,44 @@
 /**
+ * @module errors/errors
+ *
+ * @description
+ * Typed error class hierarchy for `@sipheron/vdr-core`.
+ *
+ * Every error thrown by this library is an instance of `SipHeronError` or one
+ * of its subclasses. Each subclass carries a machine-readable `code` string and
+ * an optional HTTP `statusCode` so integrators can build reliable error-handling
+ * logic without string-matching on error messages.
+ *
+ * ## Class hierarchy
+ * ```
+ * Error
+ * └── SipHeronError          (base — code: string, statusCode?: number)
+ *     ├── AuthenticationError    (401)  — missing / invalid API key
+ *     ├── AnchorNotFoundError    (404)  — no anchor record for this hash
+ *     ├── HashMismatchError             — computed hash ≠ anchored hash
+ *     ├── NetworkError                 — transport / connectivity failure
+ *     ├── RateLimitError         (429) — per-second rate limit exceeded
+ *     ├── ValidationError        (400) — invalid input parameters
+ *     ├── AnchorRevokedError            — anchor has been revoked
+ *     ├── QuotaExceededError     (429) — monthly anchor quota consumed
+ *     ├── SolanaConnectionError  (503) — cannot reach Solana RPC node
+ *     └── TransactionError       (400) — Solana transaction rejected
+ * ```
+ *
+ * @example
+ * ```ts
+ * import { anchorToSolana, TransactionError, SolanaConnectionError } from '@sipheron/vdr-core'
+ *
+ * try {
+ *   await anchorToSolana({ buffer, keypair, network: 'mainnet' })
+ * } catch (err) {
+ *   if (err instanceof TransactionError)     console.error('Tx rejected:', err.message)
+ *   if (err instanceof SolanaConnectionError) console.error('RPC down:', err.message)
+ * }
+ * ```
+ */
+
+/**
  * Base error class for all SipHeron errors.
  * All errors have a machine-readable code for programmatic handling.
  */

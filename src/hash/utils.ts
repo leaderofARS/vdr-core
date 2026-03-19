@@ -1,4 +1,27 @@
 /**
+ * @module hash/utils
+ *
+ * @description
+ * Low-level buffer and hash utility helpers used across the VDR SDK.
+ *
+ * These are pure utility functions with no external dependencies — they
+ * operate entirely on in-memory data and perform no I/O.
+ *
+ * ## Functions
+ * - `hexToBuffer(hex)`           — Decode a hex string into a `Buffer`.
+ * - `bufferToHex(buf)`           — Encode a `Buffer` as a lowercase hex string.
+ * - `constantTimeCompare(a, b)`  — Side-channel-safe string equality check.
+ *   Uses XOR accumulation so execution time is identical regardless of where
+ *   a mismatch occurs, preventing timing attacks on hash comparison.
+ * - `formatFileSize(bytes)`      — Human-readable file size string (B / KB / MB …).
+ * - `truncateHash(hash, chars)`  — Shorten a hash for display: `a3f4b2c1...f8a9b0c1`.
+ *
+ * @internal
+ * Not part of the public `@sipheron/vdr-core` API surface — used internally by
+ * `hash/sha256.ts` and `verify/compare.ts`.
+ */
+
+/**
  * Convert a hex string to a Buffer.
  */
 export function hexToBuffer(hex: string): Buffer {
