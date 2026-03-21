@@ -65,8 +65,7 @@ export interface WebhookParseOptions {
 export function verifyWebhookSignature({
   payload,
   signature,
-  secret,
-  tolerance = 300 // 5 minutes default tolerance
+  secret
 }: WebhookVerifyOptions): boolean {
   if (!payload || !signature || !secret) {
     return false

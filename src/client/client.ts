@@ -20,7 +20,7 @@
  * ### Key methods
  * | Method            | Description                                              |
  * |-------------------|----------------------------------------------------------|
- * | `anchor(opts)`    | Hash locally then POST to `/api/hashes` (or playground).|
+ * | `anchor(opts)`    | Hash locally then POST to `/api/hashes` (or playground). |
  * | `anchorBatch(opt)`| Anchor up to 500 documents; requires API key.            |
  * | `verify(opts)`    | Hash locally then POST to `/api/verify`.                 |
  * | `verifyHash(hash)`| Verify by pre-computed hash — no file provided.          |
@@ -43,7 +43,7 @@ import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
 import type { ResolvedConfig } from './config'
 import { createHttpClient, withRetry } from './http'
 import { hashDocument, isValidHash, normalizeHash } from '../hash'
-import { ValidationError, AnchorNotFoundError, AnchorRevokedError, AuthenticationError } from '../errors'
+import { ValidationError, AnchorRevokedError, AuthenticationError } from '../errors'
 
 /**
  * Main SipHeron VDR client.
@@ -63,26 +63,45 @@ export class SipHeron {
   }
 
   /**
-   * Anchor a document's SHA-256 fingerprint permanently to Solana.
+   * Anchors a document's SHA-256 fingerprint permanently to
+   * the Solana blockchain. The document itself is never
+   * transmitted — only its cryptographic fingerprint.
    *
-   * When file is provided, hashing happens locally before anything
-   * is transmitted — the document bytes never leave your machine.
+   * @param options - Anchor configuration
+   * @param options.file - Document as Buffer. Hashing occurs
+   *   locally before any network call. Provide either `file`
+   *   or `hash`, not both.
+   * @param options.hash - Pre-computed SHA-256 hash (64 hex chars).
+   *   Use this when you've already hashed the document yourself.
+   * @param options.name - Human-readable document name for
+   *   display in the dashboard. Not stored on-chain.
+   * @param options.metadata - Arbitrary key-value pairs stored
+   *   in SipHeron's database alongside the anchor record.
+   *   Not stored on-chain. Max 20 keys, 500 chars per value.
    *
-   * @param options - Anchor options
-   * @returns AnchorResult with transaction details and verification URL
+   * @returns Promise resolving to AnchorResult containing the
+   *   Solana transaction signature, block number, timestamp,
+   *   and permanent verification URL.
    *
-   * @throws {ValidationError} If neither file nor hash is provided
-   * @throws {AuthenticationError} If API key is invalid
-   * @throws {RateLimitError} If per-second rate limit is exceeded
-   * @throws {QuotaExceededError} If monthly quota is exceeded
-   * @throws {NetworkError} If network request fails
+   * @throws {AuthenticationError} If API key is invalid or missing
+   * @throws {ValidationError} If hash format is invalid
+   * @throws {RateLimitError} If monthly quota is exceeded
+   * @throws {NetworkError} If Solana RPC is unreachable after retries
    *
    * @example
-   * const anchor = await sipheron.anchor({
-   *   file: fs.readFileSync('./contract.pdf'),
-   *   name: 'Service Agreement — Acme Corp',
-   * })
+   * // Anchor from file buffer
+   * const file = readFileSync('./contract.pdf')
+   * const anchor = await client.anchor({ file, name: 'Q4 Agreement' })
    * console.log(anchor.verificationUrl)
+   * // https://verify.sipheron.com/a3f4b2c1...
+   *
+   * @example
+   * // Anchor from pre-computed hash
+   * const hash = await hashDocument(fileBuffer)
+   * const anchor = await client.anchor({ hash })
+   *
+   * @see {@link https://docs.sipheron.com/api/anchor}
+   * @since 0.1.0
    */
   async anchor(options: AnchorOptions): Promise<AnchorResult> {
     // Validate input
@@ -137,11 +156,35 @@ export class SipHeron {
   }
 
   /**
-   * Anchor multiple documents in a batch.
-   * Processes up to 500 documents per call.
+   * Anchors multiple documents in a single batch request efficiently.
+   * Instead of waiting for individual Solana transactions, this function
+   * submits hashes to the SipHeron queue where they are processed via
+   * bulk on-chain transactions or parallelized natively.
    *
-   * @param options - Batch anchor options
-   * @returns BatchAnchorResult with individual results
+   * @param options - Batch anchor configuration
+   * @param options.documents - Array of up to 500 documents. Each document
+   *   object must contain either `file` (Buffer) or `hash` (string).
+   * @param options.stopOnError - If true, the batch fails entirely on the
+   *   first error. If false, operations on successful documents continue.
+   *
+   * @returns Promise resolving to a BatchAnchorResult containing summary stats
+   *   and an array of discrete results/errors for each input.
+   *
+   * @throws {AuthenticationError} If API key is missing (devnet playground
+   *   does not support batch operations).
+   * @throws {ValidationError} If the batch size exceeds 500 or is empty.
+   *
+   * @example
+   * const results = await client.anchorBatch({
+   *   documents: [
+   *     { file: buffer1, name: 'Doc 1' },
+   *     { file: buffer2, name: 'Doc 2' }
+   *   ]
+   * })
+   * console.log(`Anchored ${results.successful} out of ${results.total}`)
+   *
+   * @see {@link https://docs.sipheron.com/api/anchor-batch}
+   * @since 0.1.0
    */
   async anchorBatch(options: BatchAnchorOptions): Promise<BatchAnchorResult> {
     if (!this.config.apiKey) {
@@ -177,25 +220,39 @@ export class SipHeron {
   }
 
   /**
-   * Verify a document against its blockchain anchor.
+   * Verifies the absolute authenticity of a document against the
+   * immutable Solana blockchain. 
    *
-   * When file is provided, hashing happens locally — the document
-   * bytes are never transmitted.
+   * When providing a `file` buffer, the document is locally hashed,
+   * guaranteeing zero-knowledge verification — document bytes are
+   * never transmitted over the network.
    *
-   * @param options - Verify options
-   * @returns VerificationResult with authentic boolean and anchor details
+   * @param options - Verification configuration
+   * @param options.file - Document as Buffer to be hashed locally.
+   *   Cannot be provided simultaneously with `hash`.
+   * @param options.hash - Pre-computed SHA-256 hash string to verify.
+   *   Cannot be provided simultaneously with `file`.
    *
-   * @throws {ValidationError} If neither file nor hash is provided
-   * @throws {AnchorNotFoundError} If no anchor record exists for this hash
-   * @throws {AnchorRevokedError} If the anchor has been revoked
+   * @returns Promise resolving to VerificationResult. 
+   *   `authentic: true` implies a perfect cryptograhic match exists on-chain.
+   *   `authentic: false` implies the document has been altered or never existed.
+   *
+   * @throws {ValidationError} If inputs are malformed or missing both params
+   * @throws {AnchorRevokedError} If the document anchor was computationally revoked
+   * @throws {NetworkError} If SIPHERON verification nodes are completely unavailable
    *
    * @example
-   * const result = await sipheron.verify({ file })
+   * const file = readFileSync('./received_contract.pdf')
+   * const result = await client.verify({ file })
+   * 
    * if (result.authentic) {
-   *   console.log('Document is authentic')
+   *   console.log('Valid! Anchored at:', result.timestamp)
    * } else {
-   *   console.log('Document has been modified')
+   *   console.error('TAMPERED OR UNKNOWN DOCUMENT')
    * }
+   *
+   * @see {@link https://docs.sipheron.com/api/verify}
+   * @since 0.1.0
    */
   async verify(options: VerifyOptions): Promise<VerificationResult> {
     if (!options.file && !options.hash) {
