@@ -19,3 +19,6 @@
 export { SipHeron } from './client'
 export { resolveConfig, buildExplorerUrl, buildVerifyUrl, DEFAULTS } from './config'
 export type { ResolvedConfig } from './config'
+export { withRetry, DEFAULT_RETRY_CONFIG } from './retry'
+export type { RetryConfig } from './retry'
+export { RPCPool, DEFAULT_RPC_NODES } from './rpc-pool'

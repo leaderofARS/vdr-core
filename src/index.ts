@@ -43,7 +43,8 @@
  */
 
 // ── Main client ──
-export { SipHeron } from './client'
+export { SipHeron, withRetry, DEFAULT_RETRY_CONFIG, RPCPool, DEFAULT_RPC_NODES } from './client'
+export type { RetryConfig } from './client'
 
 // ── Standalone functions ──
 export { hashDocument, hashFile, hashFileStream, hashFileWithProgress, hashStream, hashBase64, isValidHash, normalizeHash } from './hash'
