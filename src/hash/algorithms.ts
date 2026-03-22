@@ -65,6 +65,10 @@ export async function hashDocument(
     throw new ValidationError('File buffer is required')
   }
 
+  if (file.length === 0) {
+    throw new ValidationError('File buffer cannot be empty')
+  }
+
   if (algorithm === 'blake3') {
     const { createHash } = await importBlake3()
     return createHash().update(file).digest(encoding as any)

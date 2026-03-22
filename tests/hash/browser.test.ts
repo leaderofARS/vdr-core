@@ -6,7 +6,7 @@
  * produce byte-identical output for the same input.
  */
 import { webcrypto } from 'crypto'
-import { hashDocument } from '../../src/hash/sha256'
+import { hashDocument } from '../../src/hash/algorithms'
 import { hashDocumentBrowser, hashAuto } from '../../src/hash/browser'
 
 // ── Polyfill globalThis.crypto for Node.js test environment ──────────────────
