@@ -43,8 +43,8 @@
  */
 
 // ── Main client ──
-export { SipHeron, withRetry, DEFAULT_RETRY_CONFIG, RPCPool, DEFAULT_RPC_NODES } from './client'
-export type { RetryConfig } from './client'
+export { SipHeron, withRetry, DEFAULT_RETRY_CONFIG, RPCPool, DEFAULT_RPC_NODES, AnchorMonitor } from './client'
+export type { RetryConfig, AnchorMonitorEvents } from './client'
 
 export { anchorBatch } from './anchor'
 export type { BatchAnchorOptions, BatchItemResult, BatchAnchorResult } from './anchor'

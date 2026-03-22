@@ -141,7 +141,26 @@ const record = await sipheron.anchors.create({
 console.log('Certificate URL:', record.verificationUrl)
 
 // 3. Batch Verification API
-const verification = await sipheron.verify.check({ file: documentBuffer })
+const verification = await sipheron.verify({ file: documentBuffer })
+
+// 4. Real-time Anchor Monitoring
+import { AnchorMonitor } from '@sipheron/vdr-core'
+
+const monitor = new AnchorMonitor(sipheron)
+const anchor = await sipheron.anchor({ file: documentBuffer, name: 'Contract' })
+
+monitor
+  .watch(anchor.id)
+  .on('confirmation', (id, count) => {
+    console.log(`${id}: ${count} confirmations`)
+  })
+  .on('confirmed', (result) => {
+    console.log('Fully confirmed:', result.verificationUrl)
+    // Trigger downstream workflow here
+  })
+  .on('failed', (id, error) => {
+    console.error('Anchor failed:', error.message)
+  })
 ```
 
 ---
