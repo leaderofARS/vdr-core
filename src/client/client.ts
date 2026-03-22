@@ -34,6 +34,7 @@ import type { SipHeronConfig } from '../types'
 import type {
   AnchorOptions,
   AnchorResult,
+  HashAlgorithm,
   VerifyOptions,
   VerificationResult,
 } from '../types'
@@ -389,6 +390,7 @@ export class SipHeron {
     return {
       id: String(anchor.id || ''),
       hash,
+      hashAlgorithm: anchor.hashAlgorithm as HashAlgorithm || 'sha256',
       transactionSignature: txSig,
       blockNumber: Number(anchor.blockNumber || blockchain.blockNumber || 0),
       timestamp: String(anchor.blockTimestamp || anchor.createdAt || anchor.registeredAt || ''),

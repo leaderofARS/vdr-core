@@ -50,11 +50,15 @@ export { anchorBatch } from './anchor'
 export type { BatchAnchorOptions, BatchItemResult, BatchAnchorResult } from './anchor'
 
 // ── Standalone functions ──
-export { hashDocument, hashFile, hashFileStream, hashFileWithProgress, hashStream, hashBase64, isValidHash, normalizeHash } from './hash'
+export { 
+  hashDocument, hashFile, hashFileStream, hashFileWithProgress, 
+  hashStream, hashBase64, isValidHash, normalizeHash, getAlgorithmInfo 
+} from './hash'
 export { hashDocumentBrowser, hashAuto } from './hash'
 export { verifyHashStandalone as verifyHash } from './verify'
 export { verifyLocally, verifyOnChain, deriveAnchorAddress } from './verify'
 export { verifyWebhookSignature, parseWebhookEvent } from './webhook'
+export { VerificationCache } from './verify/cache'
 
 // ── Certificate utilities ──
 export {
