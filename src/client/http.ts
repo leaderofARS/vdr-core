@@ -29,7 +29,7 @@
  *
  * @internal
  */
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios'
+import axios, { AxiosInstance, AxiosError } from 'axios'
 import http from 'http'
 import https from 'https'
 import type { ResolvedConfig } from './config'
