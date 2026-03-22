@@ -45,6 +45,7 @@
  */
 
 import { ValidationError } from '../errors'
+import type { HashOptions } from '../types'
 
 // ── Minimal type declarations for browser APIs ────────────────────────────────
 // These avoid requiring the full DOM lib in tsconfig while still giving
@@ -115,7 +116,8 @@ function digestToHex(hashBuffer: ArrayBuffer): string {
  * ```
  */
 export async function hashDocumentBrowser(
-  input: BlobLike | ArrayBuffer | Uint8Array
+  input: BlobLike | ArrayBuffer | Uint8Array,
+  options: HashOptions = {}
 ): Promise<string> {
   if (!input) {
     throw new ValidationError('Input is required for browser hashing')
@@ -151,7 +153,15 @@ export async function hashDocumentBrowser(
     )
   }
 
-  const hashBuffer = await subtle.digest('SHA-256', buffer)
+  const algorithm = options.algorithm ?? 'sha256'
+  let webAlgo = 'SHA-256'
+  
+  if (algorithm === 'sha512') webAlgo = 'SHA-512'
+  if (algorithm === 'md5' || algorithm === 'blake3') {
+    throw new Error(`${algorithm.toUpperCase()} is not natively supported in the browser. Use SHA-256 or SHA-512.`)
+  }
+
+  const hashBuffer = await subtle.digest(webAlgo, buffer)
   return digestToHex(hashBuffer)
 }
 
@@ -177,7 +187,8 @@ export async function hashDocumentBrowser(
  * ```
  */
 export async function hashAuto(
-  input: Buffer | ArrayBuffer | Uint8Array | BlobLike
+  input: Buffer | ArrayBuffer | Uint8Array | BlobLike,
+  options: HashOptions = {}
 ): Promise<string> {
   if (!input) {
     throw new ValidationError('Input is required for hashing')
@@ -185,8 +196,8 @@ export async function hashAuto(
 
   // ── Path 1: Node.js Buffer → use native crypto (fastest) ───────────────
   if (typeof Buffer !== 'undefined' && Buffer.isBuffer(input)) {
-    const { hashDocument } = await import('./sha256')
-    return hashDocument(input)
+    const { hashDocument } = await import('./algorithms')
+    return hashDocument(input, options)
   }
 
   // ── Path 2: Blob / File → must use Web Crypto ──────────────────────────
@@ -196,14 +207,14 @@ export async function hashAuto(
     !(input instanceof Uint8Array) &&
     !(input instanceof ArrayBuffer)
   ) {
-    return hashDocumentBrowser(input as BlobLike)
+    return hashDocumentBrowser(input as BlobLike, options)
   }
 
   // ── Path 3: ArrayBuffer / Uint8Array → prefer Node, fallback to Web ────
   if (input instanceof ArrayBuffer || input instanceof Uint8Array) {
     // If Node.js Buffer is available, convert and use native crypto (faster)
     if (typeof Buffer !== 'undefined') {
-      const { hashDocument } = await import('./sha256')
+      const { hashDocument } = await import('./algorithms')
       const buf =
         input instanceof ArrayBuffer
           ? Buffer.from(input)
@@ -212,11 +223,11 @@ export async function hashAuto(
               input.byteOffset,
               input.byteLength
             )
-      return hashDocument(buf)
+      return hashDocument(buf, options)
     }
 
     // Pure browser / edge — use Web Crypto
-    return hashDocumentBrowser(input)
+    return hashDocumentBrowser(input, options)
   }
 
   throw new ValidationError(

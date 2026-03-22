@@ -23,7 +23,7 @@
  * Return value of all `verify*` methods. The boolean `authentic` field is the
  * fast-path check; inspect `status` for the full picture.
  */
-import type { AnchorResult } from './anchor'
+import type { AnchorResult, HashAlgorithm } from './anchor'
 
 export interface VerifyOptions {
   /**
@@ -44,6 +44,8 @@ export interface VerifyOptions {
    * If true, forces a network check even if a valid cached result exists.
    */
   noCache?: boolean
+  /** The hashing algorithm used for the document fingerprint. Default: 'sha256' */
+  hashAlgorithm?: HashAlgorithm
 }
 
 export type VerificationStatus =

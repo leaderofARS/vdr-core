@@ -1,4 +1,4 @@
-import type { AnchorResult } from '../types'
+import type { AnchorResult, HashAlgorithm } from '../types'
 import { SipHeron } from '../client'
 
 export interface BatchAnchorOptions {
@@ -7,11 +7,14 @@ export interface BatchAnchorOptions {
     hash?: string
     name?: string
     metadata?: Record<string, string>
+    hashAlgorithm?: HashAlgorithm
   }>
   concurrency?: number         // default: 5, max: 20
   onProgress?: (completed: number, total: number, result: BatchItemResult) => void
   continueOnError?: boolean    // default: true
   delayBetweenBatchesMs?: number // default: 100
+  /** Global algorithm for the entire batch if not specified on individual documents. */
+  hashAlgorithm?: HashAlgorithm
 }
 
 export interface BatchItemResult {
@@ -54,7 +57,10 @@ export async function anchorBatch(
       chunk.map(async (doc, chunkIndex) => {
         const index = i + chunkIndex
         try {
-          const anchor = await client.anchor(doc)
+          const anchor = await client.anchor({
+            ...doc,
+            hashAlgorithm: doc.hashAlgorithm || options.hashAlgorithm
+          })
           return { index, success: true, anchor }
         } catch (error) {
           if (!continueOnError) throw error

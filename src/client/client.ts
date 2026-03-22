@@ -34,6 +34,7 @@ import type { SipHeronConfig } from '../types'
 import type {
   AnchorOptions,
   AnchorResult,
+  HashAlgorithm,
   VerifyOptions,
   VerificationResult,
 } from '../types'
@@ -41,7 +42,7 @@ import { anchorBatch, BatchAnchorOptions, BatchAnchorResult } from '../anchor/ba
 import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
 import type { ResolvedConfig } from './config'
 import { createHttpClient, withRetry } from './http'
-import { hashDocument, isValidHash, normalizeHash } from '../hash'
+import { hashDocument, isValidHash, normalizeHash, getAlgorithmInfo } from '../hash'
 import { ValidationError, AnchorRevokedError, AuthenticationError } from '../errors'
 import { VerificationCache } from '../verify/cache'
 
@@ -123,13 +124,16 @@ export class SipHeron {
 
     // Compute hash locally if file provided
     let hash: string
+    const algorithm = options.hashAlgorithm ?? 'sha256'
+    
     if (options.file) {
-      hash = await hashDocument(options.file)
+      hash = await hashDocument(options.file, { algorithm })
     } else {
       hash = normalizeHash(options.hash!)
-      if (!isValidHash(hash)) {
+      if (!isValidHash(hash, algorithm)) {
+        const info = getAlgorithmInfo(algorithm)
         throw new ValidationError(
-          'Invalid hash format. Must be a 64-character lowercase hex string (SHA-256).'
+          `Invalid hash format for ${info.label}. Must be a ${info.outputLength}-character lowercase hex string.`
         )
       }
     }
@@ -150,6 +154,7 @@ export class SipHeron {
     const response = await withRetry(
       () => this.http.post(endpoint, {
         hash,
+        hashAlgorithm: algorithm,
         filename: options.name || options.metadata?.name || null,
         metadata: options.name || options.metadata?.name || null,
         ...(options.metadata && { tags: Object.keys(options.metadata) }),
@@ -242,13 +247,16 @@ export class SipHeron {
 
     // Compute hash locally if file provided
     let hash: string
+    const algorithm = options.hashAlgorithm ?? 'sha256'
+
     if (options.file) {
-      hash = await hashDocument(options.file)
+      hash = await hashDocument(options.file, { algorithm })
     } else {
       hash = normalizeHash(options.hash!)
-      if (!isValidHash(hash)) {
+      if (!isValidHash(hash, algorithm)) {
+        const info = getAlgorithmInfo(algorithm)
         throw new ValidationError(
-          'Invalid hash format. Must be a 64-character hex string (SHA-256).'
+          `Invalid hash format for ${info.label}. Must be a ${info.outputLength}-character hex string.`
         )
       }
     }
@@ -262,7 +270,7 @@ export class SipHeron {
     }
 
     const response = await withRetry(
-      () => this.http.post(endpoint, { hash }),
+      () => this.http.post(endpoint, { hash, hashAlgorithm: algorithm }),
       this.config.retries
     )
 
@@ -382,6 +390,7 @@ export class SipHeron {
     return {
       id: String(anchor.id || ''),
       hash,
+      hashAlgorithm: anchor.hashAlgorithm as HashAlgorithm || 'sha256',
       transactionSignature: txSig,
       blockNumber: Number(anchor.blockNumber || blockchain.blockNumber || 0),
       timestamp: String(anchor.blockTimestamp || anchor.createdAt || anchor.registeredAt || ''),

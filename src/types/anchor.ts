@@ -47,6 +47,8 @@ export interface AnchorOptions {
   metadata?: Record<string, string>
   /** Optional idempotency key — prevents duplicate anchors on retry */
   idempotencyKey?: string
+  /** The hashing algorithm to use for the document fingerprint. Default: 'sha256' */
+  hashAlgorithm?: HashAlgorithm
 }
 
 export interface AnchorResult {
@@ -74,5 +76,26 @@ export interface AnchorResult {
   contractAddress: string
   /** Solana network this was anchored on */
   network: string
+  /** The hashing algorithm used to produce the document fingerprint. Default: 'sha256' */
+  hashAlgorithm?: HashAlgorithm
+}
+
+/**
+ * Supported cryptographic hashing algorithms.
+ * - 'sha256' — Industry standard, balanced speed/security. ✅ Default.
+ * - 'sha512' — Maximum collision resistance for extremely long-term anchors.
+ * - 'blake3' — High-performance hashing, optimized for modern CPUs.
+ * - 'md5'    — Legacy support. ⚠️ Not recommended for new applications.
+ */
+export type HashAlgorithm = 'sha256' | 'sha512' | 'blake3' | 'md5'
+
+/**
+ * Options for document hashing.
+ */
+export interface HashOptions {
+  /** Hashing algorithm to use. Default: 'sha256' */
+  algorithm?: HashAlgorithm
+  /** Output encoding for the digest. Default: 'hex' */
+  encoding?: 'hex' | 'base64'
 }
 

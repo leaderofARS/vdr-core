@@ -21,7 +21,7 @@
  * - `hexToBuffer`, `bufferToHex`, `constantTimeCompare`,
  *   `formatFileSize`, `truncateHash`
  */
-export { hashDocument, hashFile, hashFileStream, hashFileWithProgress, hashStream, hashBase64, isValidHash, normalizeHash } from './sha256'
+export { hashDocument, hashFile, hashFileStream, hashFileWithProgress, hashStream, hashBase64, isValidHash, normalizeHash, getAlgorithmInfo } from './algorithms'
 export { hashDocumentBrowser, hashAuto } from './browser'
 export { hexToBuffer, bufferToHex, constantTimeCompare,
          formatFileSize, truncateHash } from './utils'
