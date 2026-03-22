@@ -25,8 +25,6 @@ export type {
   AnchorOptions,
   AnchorResult,
   AnchorStatus,
-  BatchAnchorOptions,
-  BatchAnchorResult,
 } from './anchor'
 
 export type {

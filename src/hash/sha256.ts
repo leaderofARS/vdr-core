@@ -9,14 +9,14 @@
  * 64-character hex digest is used for anchoring and verification.
  *
  * ## Functions
- * | Function            | Environment  | Input            |
- * |---------------------|--------------|------------------|
+ * | Function            | Environment    | Input            |
+ * |---------------------|----------------|------------------|
  * | `hashDocument(buf)` | Node + Browser | `Buffer`         |
- * | `hashFile(path)`    | Node only    | filesystem path  |
- * | `hashStream(stream)`| Node + Browser | readable stream |
- * | `hashBase64(b64)`   | Node + Browser | Base64 string   |
- * | `isValidHash(h)`    | —            | any string       |
- * | `normalizeHash(h)`  | —            | any string       |
+ * | `hashFile(path)`    | Node only    n | filesystem path  |
+ * | `hashStream(stream)`| Node + Browser | readable stream  |
+ * | `hashBase64(b64)`   | Node + Browser | Base64 string    |
+ * | `isValidHash(h)`    | —              | any string       |
+ * | `normalizeHash(h)`  | —              | any string       |
  *
  * ## Security properties
  * - **Non-reversible** — SHA-256 is a one-way function; the document cannot

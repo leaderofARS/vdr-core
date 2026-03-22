@@ -34,11 +34,10 @@ import type { SipHeronConfig } from '../types'
 import type {
   AnchorOptions,
   AnchorResult,
-  BatchAnchorOptions,
-  BatchAnchorResult,
   VerifyOptions,
   VerificationResult,
 } from '../types'
+import { anchorBatch, BatchAnchorOptions, BatchAnchorResult } from '../anchor/batch'
 import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
 import type { ResolvedConfig } from './config'
 import { createHttpClient, withRetry } from './http'
@@ -190,33 +189,7 @@ export class SipHeron {
     if (!this.config.apiKey) {
       throw new AuthenticationError('apiKey is required for batch anchoring. Use single anchor() for devnet playground.')
     }
-    if (!options.documents || options.documents.length === 0) {
-      throw new ValidationError('documents array cannot be empty')
-    }
-    if (options.documents.length > 500) {
-      throw new ValidationError('Maximum 500 documents per batch')
-    }
-
-    const results: BatchAnchorResult['results'] = []
-    let successful = 0
-    let failed = 0
-
-    for (const doc of options.documents) {
-      try {
-        const result = await this.anchor(doc)
-        results.push(result)
-        successful++
-      } catch (error) {
-        if (options.stopOnError) throw error
-        results.push({
-          error: (error as Error).message,
-          input: doc,
-        })
-        failed++
-      }
-    }
-
-    return { results, successful, failed, total: options.documents.length }
+    return anchorBatch(this, options)
   }
 
   /**

@@ -46,6 +46,9 @@
 export { SipHeron, withRetry, DEFAULT_RETRY_CONFIG, RPCPool, DEFAULT_RPC_NODES } from './client'
 export type { RetryConfig } from './client'
 
+export { anchorBatch } from './anchor'
+export type { BatchAnchorOptions, BatchItemResult, BatchAnchorResult } from './anchor'
+
 // ── Standalone functions ──
 export { hashDocument, hashFile, hashFileStream, hashFileWithProgress, hashStream, hashBase64, isValidHash, normalizeHash } from './hash'
 export { hashDocumentBrowser, hashAuto } from './hash'
@@ -84,8 +87,6 @@ export type {
   AnchorOptions,
   AnchorResult,
   AnchorStatus,
-  BatchAnchorOptions,
-  BatchAnchorResult,
   DirectAnchorOptions,
   DirectAnchorResult,
   VerifyOptions,
