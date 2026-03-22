@@ -40,3 +40,6 @@ export {
   isValidTxSignature,
   estimateAnchorCost,
 } from './solana'
+
+export { anchorBatch } from './batch'
+export type { BatchAnchorOptions, BatchItemResult, BatchAnchorResult } from './batch'

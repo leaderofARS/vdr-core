@@ -76,20 +76,3 @@ export interface AnchorResult {
   network: string
 }
 
-export interface BatchAnchorOptions {
-  /** Array of documents to anchor */
-  documents: AnchorOptions[]
-  /** Stop on first failure. Default: false (continue on failure) */
-  stopOnError?: boolean
-}
-
-export interface BatchAnchorResult {
-  /** Results for each document in the same order as input */
-  results: (AnchorResult | { error: string; input: AnchorOptions })[]
-  /** Number of successful anchors */
-  successful: number
-  /** Number of failed anchors */
-  failed: number
-  /** Total documents processed */
-  total: number
-}
