@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `client.anchors.revoke()` method to manually trigger a revocation flag on a managed SipHeron anchor.
   - Verification operations now correctly consume `Status: 'REVOKED'`, resolving with `authentic: true` alongside detailed revocation metrics (`revokedAt`, `supersededByAnchorId`, etc.).
   - Added robust exported Types (`RevocationReason`, `RevocationRecord`) inside natively supported SDK interfaces.
+- **Document Version Chain (Linked Anchors)**: Link a series of document versions into a verifiable chain.
+  - Added `previousAnchorId` field to anchor options to link amended versions to their originals.
+  - Added `client.anchors.getVersionChain()` method to automatically retrieve and trace a document's provable history lifecycle.
 
 ---
 

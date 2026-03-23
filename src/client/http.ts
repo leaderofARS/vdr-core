@@ -44,13 +44,19 @@ import {
 } from '../errors'
 
 export function createHttpClient(config: ResolvedConfig): AxiosInstance {
+  const defaultHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'User-Agent': '@sipheron/vdr-core/0.1.0 Node/' + process.version,
+  }
+
+  if (config.apiKey) {
+    defaultHeaders['x-api-key'] = config.apiKey
+  }
+
   const instance = axios.create({
     baseURL: config.baseUrl,
     timeout: config.timeout,
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': '@sipheron/vdr-core/0.1.0 Node/' + process.version,
-    },
+    headers: defaultHeaders,
     httpsAgent: new https.Agent({ family: 4 }),
     httpAgent: new http.Agent({ family: 4 }),
   })
