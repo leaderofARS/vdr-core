@@ -37,13 +37,14 @@ import type {
   HashAlgorithm,
   VerifyOptions,
   VerificationResult,
+  RevocationReason,
 } from '../types'
 import { anchorBatch, BatchAnchorOptions, BatchAnchorResult } from '../anchor/batch'
 import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
 import type { ResolvedConfig } from './config'
 import { createHttpClient, withRetry } from './http'
 import { hashDocument, isValidHash, normalizeHash, getAlgorithmInfo } from '../hash'
-import { ValidationError, AnchorRevokedError, AuthenticationError } from '../errors'
+import { ValidationError, AuthenticationError } from '../errors'
 import { VerificationCache } from '../verify/cache'
 
 /**
@@ -58,6 +59,22 @@ export class SipHeron {
   private readonly config: ResolvedConfig
   private readonly http: AxiosInstance
   private readonly verifyCache?: VerificationCache
+
+  public readonly anchors = {
+    revoke: async (anchorId: string, options: {
+      reason: RevocationReason
+      note?: string
+      supersededByAnchorId?: string
+    }): Promise<void> => {
+      if (!this.config.apiKey) {
+        throw new AuthenticationError('apiKey is required to revoke anchors.')
+      }
+      await withRetry(
+        () => this.http.post(`/api/anchors/${anchorId}/revoke`, options),
+        this.config.retries
+      )
+    }
+  }
 
   constructor(config: SipHeronConfig) {
     this.config = resolveConfig(config)
@@ -277,12 +294,32 @@ export class SipHeron {
     const data = response.data
 
     // Handle revoked
-    if (data.status === 'REVOKED') {
-      throw new AnchorRevokedError(
+    if (data.status === 'REVOKED' || data.anchor?.revocation) {
+      // Return revocation info instead of throwing
+      const anchorData = data.anchor || {};
+      const revocationData = anchorData.revocation || {
+        anchorId: anchorData.id || '',
+        revokedAt: anchorData.revokedAt || data.verified_at,
+        revokedBy: anchorData.revokedBy || 'system',
+        reason: anchorData.revocationReason || 'other',
+        note: anchorData.revocationNote,
+        supersededByAnchorId: anchorData.supersededByAnchorId
+      };
+      
+      const result: VerificationResult = {
+        authentic: data.authentic === true || true, // Treat as authentic but superseded
+        status: 'revoked',
         hash,
-        data.anchor?.revokedAt,
-        data.anchor?.revocationNote
-      )
+        verifiedAt: data.verified_at,
+        anchor: data.anchor ? this._mapAnchorResponse(data) : undefined,
+        anchoredHash: data.anchor?.hash,
+        revocation: revocationData
+      }
+      
+      if (this.verifyCache && !options.noCache) {
+        this.verifyCache.set(hash, result)
+      }
+      return result
     }
 
     const result: VerificationResult = {

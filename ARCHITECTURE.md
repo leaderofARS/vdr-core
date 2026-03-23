@@ -1,63 +1,58 @@
-# SipHeron VDR — Core Technical Architecture
+# Architecture Details
 
-*The `@sipheron/vdr-core` library provides the foundational primitives for cryptographically secure anchoring and validation of digital assets on the Solana public ledger.*
+Welcome to the internal workings of **SipHeron VDR Core**. This document outlines how the SDK guarantees cryptographic authenticity, handles dual-method integrations (Direct vs. Hosted), and enforces strict localization for zero-knowledge proofs.
 
-In the same way that cryptographic libraries must be rigorously constructed to prevent vulnerabilities, a Verified Document Registry (VDR) engine requires uncompromising guarantees around data privacy, deterministic computation, and algorithmic zero-knowledge properties. Our design doctrine adheres to strict localized computation, ensuring user payloads never leave the machine boundaries.
+## 1. Zero-Knowledge Proof Through Local Hashing
 
----
+A non-negotiable principle of SipHeron VDR is that **raw files must never be transmitted to the application layer unhashed**. 
 
-## 1. Zero-Knowledge Information Architecture
+### The Flow
+1. User provides a `Buffer` or a `ReadStream` representing the document.
+2. The `vdr-core` SDK consumes the payload through native Crypto APIs (e.g. `crypto.createHash('sha256')` in Node or `SubtleCrypto` in the Browser).
+3. The SDK transforms massive files via standard 64kb pipeline blocks (`hashFileStream()`), avoiding RAM overflow.
+4. Exactly **64 characters** of a Hex string (the SHA-256 digest) are outputted. 
 
-### Deterministic Local Hashing (`crypto/sha256`)
-The fundamental principle of the SipHeron architecture is that **raw document binaries (`Buffer`) are never transmitted over the wire**. 
+Only this string is ever shipped over HTTP or over standard Solana RPC vectors. Because SHA-256 is deterministic and irreversible, it acts as an absolute one-way commitment schema.
 
-When `.anchor({ file: data })` or `.verify({ file: data })` is called:
-1. The client intercepts the memory buffer directly.
-2. The payload is chunked and streamed into Node.js native `crypto.createHash('sha256')`.
-3. The cryptographic operation collapses the binary payload into a definitive, 64-character hexadecimal digest representing the mathematical fingerprint of the asset.
-4. **Only the fingerprint is transmitted** to the SipHeron API routing layer.
+## 2. Dual Architecture Paths
 
-Because SHA-256 is fundamentally non-reversible and collision-resistant across $2^{256}$ possibilities, the document's content remains perfectly obfuscated while retaining strict mathematical verifiability. 
+Our `vdr-core` supports two modes entirely unified underneath the exact same SDK logic. 
 
-### Constant-Time Threat Mitigation
-To prevent side-channel timing attacks where an adversary might infer the validity of sequential hash bytes by analyzing CPU response latencies, `vdr-core` utilizes constant-time comparison metrics (`crypto.timingSafeEqual`) during local verification events (`verifyLocally`). Execution time remains identical whether the first byte mismatches or the last byte mismatches.
+```mermaid
+graph TD
+    A[Client Application] --> B(vdr-core SDK)
+    B --> C{Which Path?}
+    C -->|Direct| D[anchorToSolana / verifyOnChain]
+    C -->|Hosted| E[client.anchor / client.verify]
+    D --> F[Solana RPC Node]
+    E --> G[SipHeron Hosted Backend]
+    G --> F
+```
 
----
+### Direct On-Chain
+When you invoke **`anchorToSolana()`** or **`verifyOnChain()`**:
+- The SDK utilizes `@solana/web3.js` to build a transaction signed by a locally-provided `Keypair`.
+- Using deterministic **Program Derived Addresses (PDAs)**, the seed is defined as `[ "anchor", Buffer.from(hash) ]`. This mathematically ensures only one unique anchor can exist on the blockchain per document signature within the SipHeron App bounds.
+- No `apiKey` is required. The ledger acts completely permissionlessly.
 
-## 2. On-Chain Ledger Consensus
+### Hosted SaaS Environment
+When utilizing the `new SipHeron(config)` proxy wrapper:
+- It wraps the Axios interface to communicate with `api.sipheron.com`.
+- Handles retry logic, error serialization, and JSON decoding of expanded Metadata.
+- Enables you to run compliance protocols, fetch Certificates, and listen to Webhooks.
 
-### Immutable Anchoring Parity
-A verifiable document is represented as a state transition on the Solana blockchain under the SipHeron smart contract (`6ecWPUK87zx...`). 
+## 3. The Soft Revocation Registry
 
-The anchoring process binds the $H(doc)$ fingerprint to a timestamped block. Solana's Proof-of-History (PoH) consensus mechanism provides strict chronological ordering and deep finality, ensuring that the existence of $H(doc)$ at time $T_0$ is mathematically indisputable.
+Sometimes, an authentic document becomes outdated. It has not been *tampered with*, but it has been *superseded*. Because blockchains are fundamentally immutable, deleting an Anchor goes against the entire ledger thesis. 
 
-### Independent Verifiability Axiom
-SipHeron is an orchestrator, not a centralized source of truth. The underlying records are permanently hosted on the public ledger. 
+Instead, SipHeron applies an architecture known as **Soft Revocation**.
+- If a document is superseded (e.g., an amendment replaces a contract), it is flagged in the registry.
+- `vdr-core` exposes `client.anchors.revoke()` which flags this on the registry layer.
+- During `client.verify({ file })`, if the anchor has the revoked flag, the response gracefully resolves `authentic: true` but `status: 'revoked'`.
+- It returns a heavily typed `RevocationRecord` exposing `reason`, `revokedAt`, and critically, `supersededByAnchorId` to trace the compliance chain directly to the newest version.
 
-`vdr-core` provides `examples/independent-verify.ts` as a cryptographic guarantee of our architectural axioms. Any engineering team can bypass the `vdr-core` dependency entirely and utilize base OS hashing tools (like `sha256sum`) and a standard Solana blockchain explorer to validate the transaction signatures directly. If SipHeron ceases to exist, the proofs remain permanent and functional independently.
+## 4. Webhook Integrity (HMAC-SHA256)
 
----
+Hosted apps receive Webhooks. `vdr-core` exports the exact utility to parse them: `parseWebhookEvent`. 
 
-## 3. Network Resiliency & State Machine
-
-### Fault-Tolerant Request Handling
-To ensure enterprise-grade stability under volatile network conditions, the internal HTTP client (`src/client/http.ts`) implements a managed interception layer.
-
-- **Exponential Backoff**: Transitory network failures (502, 503, 504) or API throughput limitations (HTTP 429 Rate Limits) trigger an automated geometric retry protocol. Base sleep intervals expand strictly up to pre-configured bounds. 
-- **Type-Strict Error Bubbling**: Broad `AxiosError` exceptions are preemptively caught, modeled, and re-thrown as specific, heavily-typed exceptions (e.g., `QuotaExceededError`, `AnchorRevokedError`) so integrators can build programmatic fallback logic based on explicit deterministic failure codes.
-
-### Idempotency
-Because network layers can experience packet loss leading to duplicated API requests, `vdr-core` handles idempotent key routing. Submitting the exact same transaction fingerprint multiple times with an `Idempotency-Key` prevents duplicated Solana transaction fees and duplicate anchor events from muddying enterprise audit rails.
-
----
-
-## 4. Platform Cryptographic Types 
-
-`vdr-core` ships with extensive TypeScript validation guarding input/output flow. It maps the complex graph of webhook responses to rigorous interfaces (`WebhookEvent`, `AnchorConfirmedEvent`, `AnomalyDetectedEvent`). 
-
-This provides intellisense autocomplete and compile-time certainty across event-driven infrastructure, enabling institutions to securely link verification actions into high-compliance CRMs and supply chain systems.
-
----
-
-## Conclusion
-`@sipheron/vdr-core` represents a hardened interface designed around zero-trust client models. It treats cryptographic privacy as an absolute axiom, offloads immutability entirely to deterministic external networks (Solana), and provides a resilient interface for scale.
+We mandate cryptographic identity verification here via **HMAC-SHA256**. The backend signs the raw bodily string against the customer's Dashboard Secret. The SDK ensures the computed `digest` locally matches the `x-sipheron-signature` header via **constant-time string comparison**, averting timing attacks.

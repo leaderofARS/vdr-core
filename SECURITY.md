@@ -1,54 +1,36 @@
-#  Security Protocol & Vulnerability Threat Model
+# Security Policy
 
-## 1. Zero-Trust Local Extrapolation
+SipHeron is built on the philosophy of decentralized trust and cryptographic guarantees. As such, the security of `@sipheron/vdr-core` is our highest operational priority. The SDK facilitates localized hashing, programmatic smart contract derivation, and immutable state verification. 
 
-All document binary interpolation and SHA-256 state transformations are executed strictly within the local host memory boundaries utilizing standard Node.js native cryptographic suites (`crypto.createHash`). The internal sequence stream is uniquely optimized to discard chunk memory immediately upon digest completion. 
+## Supported Versions
 
-The central systemic axiom of `@sipheron/vdr-core` is: **The unencrypted payload binary must fundamentally never traverse external network boundaries.** This architectural invariant is mathematically verifiable by isolating the `src/hash/sha256.ts` implementation mapping.
+The following table displays the status of security updates for major releases of `@sipheron/vdr-core`. 
+It is universally advised to use the latest minor version of `0.1.x`.
 
-## 2. On-Chain Immutability & Consensus State
+| Version | Supported          | Status |
+| ------- | ------------------ | ------ |
+| > 0.1.5 | :white_check_mark: | Active Development |
+| < 0.1.4 | :x:                | Deprecated / No Patches |
 
-Proofs generated via this execution environment are inherently persisted to the Solana Proof-of-History (PoH) public ledger via the SipHeron immutable smart contract definition `6ecWPUK87zxwZP2pARJ75wbpCka92mYSGP1szrJxzAwo`. 
+## Reporting a Vulnerability
 
-Neither SipHeron infrastructural operators nor unauthorized third-party adversarial networks possess the tensor capability to modify, overwrite, or maliciously revoke these historical ledger imprint logs once finalized by the network validators.
+We request that you do **not** disclose any vulnerability details publicly or by opening a GitHub Issue, as this could immediately put our independent developer ecosystem and users at risk prior to a patch release.
 
-## 3. Side-Channel Statistical Protection
+Please email your security findings directly to:
+**[security@sipheron.com](mailto:security@sipheron.com)**
 
-Cryptographic digest cross-evaluation logic executes utilizing strictly `crypto.timingSafeEqual` operators within operations such as `verifyLocally`. This design parameter operates as a decisive mitigant against statistical timing-based adversarial attacks, systematically asserting equal operational cycle latency regardless of fault presence within the bit sequence.
+### What to report:
+- **Hashing Leaks**: If you discover a scenario where the SDK inadvertently transmits a raw file or buffer to an external endpoint instead of compiling the SHA-256 hash locally.
+- **Timing attacks**: In the Webhook signature validation (`verifyWebhookSignature`), if our constant-time equality checks are susceptible.
+- **Validation Bypasses**: Anomalies where revoked or forged signatures resolve as `authentic: true` against the verification engines locally or via Solana Program Derived Addresses.
 
-## 4. Architectural Key Isolation
+### Response timeline:
+1. We will acknowledge receipt of your vulnerability report within **48 hours**.
+2. If confirmed, we will issue a patch in a minor bump alongside a Github Security Advisory immediately.
+3. We operate internally on a 72-hour max mitigation pipeline for `vdr-core` critical cryptographic issues.
 
-The `vdr-core` compute layer purposefully lacks dependency pathways for processing mnemonic phrases, raw structural Keypair byte arrays, or unencrypted wallet derivations. SipHeron explicitly bifurcates infrastructure state—delegating high-security transaction signing procedures strictly out of network edge endpoints into HSM-enforced (Hardware Security Module) backend architecture arrays entirely disjoint from user client integration pipelines.
+## Threat Model (By Design)
 
-## 5. Dependency Protocol
+Please note that `@sipheron/vdr-core` allows users to invoke the *direct* route without needing validation from SipHeron's SaaS architecture. If users compromise their own local Solana wallets (`Keypair`), or use compromised Solana RPC endpoints (unverified nodes pushing false blocks), SipHeron cannot cryptographically intervene. 
 
-Runtime structural dependencies operate under absolute minimization constraints. Current implementation runtime matrices include only:
-- `axios` — High-efficiency HTTP client protocol interface
-
-All supplemental implementation relies exclusively on rigorous Node.js intrinsic modules.
-
----
-
-## 🚨 Vulnerability Disclosure Escalation
-
-Identified infrastructural or algorithmic security anomalies must invoke an immediate triage escalation sequence prior to public formulation. 
-
-**Response Infrastructure**: `security@sipheron.com`
-
-**Escalation Inclusion Vector**:
-- Rigorous descriptive breakdown of the vulnerability methodology
-- Systematic deterministic execution steps to trigger state failure
-- Total potential structural impact mapping
-- Formulated patch deployment definitions (if available)
-
-### Service Level Commitment
-- **Triage Acknowledgement**: Complete within 48 operational hours.
-- **Hot-Patch Deployment Mapping**: Fully mapped solution trajectory within 7 chronological days.
-
-*Note: Do not formulate public GitHub PR branch definitions or open-ecosystem tracking issues for zero-day faults to prevent adversarial exploitation windows.*
-
-## Supported Architectural Versions
-
-| Canonical SemVer | LTS Coverage Designation |
-|---------|-----------|
-| `0.1.x` | ✅ Validated / Secured |
+For the highest security posture when verifying high-value documents, ensure your RPC URL is trusted and your Keypairs are airgapped or heavily encrypted.
