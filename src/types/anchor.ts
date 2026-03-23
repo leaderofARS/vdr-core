@@ -28,6 +28,21 @@
  */
 export type AnchorStatus = 'pending' | 'confirmed' | 'failed' | 'revoked'
 
+export type RevocationReason =
+  | 'superseded'        // replaced by newer version
+  | 'error'             // anchored in error
+  | 'withdrawn'         // document officially withdrawn
+  | 'compliance'        // compliance requirement
+  | 'other'
+
+export interface RevocationRecord {
+  anchorId: string
+  revokedAt: string
+  revokedBy: string
+  reason: RevocationReason
+  note?: string
+  supersededByAnchorId?: string  // link to replacement
+}
 export interface AnchorOptions {
   /**
    * Document as Buffer.

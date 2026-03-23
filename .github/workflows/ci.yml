@@ -1,32 +1,95 @@
-name: Node.js CI
+name: VDR Core Continuous Integration
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
+    paths:
+      - 'vdr-core/**'
+      - '.github/workflows/vdr-core-ci.yml'
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
+    paths:
+      - 'vdr-core/**'
+
+defaults:
+  run:
+    working-directory: ./vdr-core
 
 jobs:
-  build:
+  security-audit:
+    name: Dependency Security Audit
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
 
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run NPM Audit
+        run: npm audit --audit-level=high
+        continue-on-error: true # Do not hard block on audits initially
+        
+  build-and-test:
+    name: Build & Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x, 22.x]
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: './vdr-core/package-lock.json'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install Pure Dependencies
+        # Using npm ci to ensure exact lockfile installation and prevent drift
+        run: npm ci
 
-    - name: Run build
-      run: npm run build
+      - name: Verify TypeScript Compilation
+        run: npm run build
 
-    - name: Run tests
-      run: npm test
+      - name: Run Cryptographic Unit Tests (with Coverage)
+        run: npm run test:coverage
+        env:
+          CI: true
+
+      - name: Upload Test Coverage
+        # Only upload coverage once on the LTS version to avoid redundant artifacts
+        if: matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./vdr-core/coverage/
+          retention-days: 14
+
+  # Optional linting phase if ESLint is bootstrapped
+  static-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './vdr-core/package-lock.json'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Enforce Style (Lint)
+        run: npm run lint
+        continue-on-error: true # Allow soft failures if ESLint configs are missing from devDependencies

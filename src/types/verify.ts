@@ -23,7 +23,7 @@
  * Return value of all `verify*` methods. The boolean `authentic` field is the
  * fast-path check; inspect `status` for the full picture.
  */
-import type { AnchorResult, HashAlgorithm } from './anchor'
+import type { AnchorResult, HashAlgorithm, RevocationRecord } from './anchor'
 
 export interface VerifyOptions {
   /**
@@ -75,4 +75,6 @@ export interface VerificationResult {
   fromCache?: boolean
   /** The original timestamp when this result was first entered into the cache. */
   cachedTimestamp?: number
+  /** Present if the document anchor was computationally revoked */
+  revocation?: RevocationRecord
 }

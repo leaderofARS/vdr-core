@@ -1,85 +1,117 @@
-<div align="center">
-  <img src="./sipheron_vdap_logo.png" alt="SipHeron VDR Logo" width="300" />
-  <h1>@sipheron/vdr-core</h1>
-  <p><strong>The Cryptographic Engine of SipHeron VDR.</strong></p>
-  
-  <p>
-    <a href="https://www.npmjs.com/package/@sipheron/vdr-core"><img src="https://img.shields.io/npm/v/@sipheron/vdr-core?color=blue&style=for-the-badge" alt="NPM Version" /></a>
-    <a href="https://github.com/SipHeron-VDR/vdr-core/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/@sipheron/vdr-core?style=for-the-badge" alt="License" /></a>
-  </p>
-</div>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/SipHeron-VDR/vdr-core/master/sipheron_vdap_logo.png" alt="SipHeron VDR Logo" width="350" />
+</p>
 
----
+# SipHeron VDR Core
 
-SipHeron VDR is a protocol for permanently notarizing documents to the Solana blockchain.
-`@sipheron/vdr-core` is the independent, foundational SDK that allows developers to interact with the SipHeron smart contract on Solana — either fully independently (no API key required) or via the managed SipHeron platform.
+[![NPM Version](https://img.shields.io/npm/v/@sipheron/vdr-core?color=blue&style=flat-square)](https://www.npmjs.com/package/@sipheron/vdr-core)
+[![License](https://img.shields.io/npm/l/@sipheron/vdr-core?style=flat-square)](https://github.com/SipHeron-VDR/vdr-core/blob/master/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green?style=flat-square)](https://nodejs.org/)
 
-## The Architecture Visualization
+**The Cryptographic Engine of SipHeron VDR.**
 
-```text
-@sipheron/vdr-core
-│
-├── DIRECT (no SipHeron account needed)
-│   ├── hashDocument()          — SHA-256 client-side
-│   ├── anchorToSolana()        — Direct blockchain write
-│   ├── verifyOnChain()         — Direct blockchain read
-│   ├── deriveAnchorAddress()   — PDA derivation
-│   └── verifyWebhookSignature() — HMAC verification
-│
-└── HOSTED (SipHeron API key required)
-    └── SipHeron (Client)
-        ├── anchors.create()
-        ├── anchors.get()
-        ├── verify.check()
-```
+SipHeron VDR is a completely decentralized protocol for permanently notarizing documents to the Solana blockchain. `@sipheron/vdr-core` is the independent, foundational SDK that allows developers to interact with the SipHeron smart contract on Solana — either fully independently (no API key required) or via the managed SipHeron SaaS platform.
 
-The separation between DIRECT and HOSTED is very deliberate. Any sophisticated buyer or external auditor can view the open source implementation in `vdr-core` and confirm that we offer **true, autonomous cryptographic independence**. `anchorToSolana()` and `verifyOnChain()` work purely using RPC nodes. By utilizing our hosted features, you only gain convenience — metadata, certificates, dashboards, and compliance features — without giving up the fundamental blockchain promise.
+***
+
+## What is SipHeron VDR Core?
+
+SipHeron is built on the philosophy of **true, autonomous cryptographic independence**. Any sophisticated buyer or external auditor can view the open-source implementation in `vdr-core` and verify our zero-knowledge architecture.
+
+- **Privacy First (Local Hashing)**: Documents are hashed client-side (in-browser or Node.js). The raw file bytes *never* leave your machine.
+- **Dual Architecture**: Choose between `DIRECT` (talk directly to Solana RPC nodes using your own wallet) or `HOSTED` (use the SipHeron API for convenience, dashboards, and advanced features).
+- **Streaming Hashes**: Built-in support for hashing massive files in chunks without blowing up your RAM.
+- **Soft Revocation Registry**: Mark documents as officially superseded or revoked without deleting the immutable blockchain record.
+- **Webhook Verification**: Cryptographically verify HMAC signatures for backend infrastructure hooks.
 
 ---
 
 ## Installation
 
+Install `@sipheron/vdr-core` via npm:
+
 ```bash
 npm install @sipheron/vdr-core
-# and the peer dependency if utilizing Direct On-Chain functions
+```
+
+If you plan on utilizing the **Direct On-Chain** functions and talking to the blockchain directly, you will also need to install `@solana/web3.js` as a peer dependency:
+
+```bash
 npm install @solana/web3.js
 ```
 
 ---
 
-## 1. Direct, On-Chain Usage (Open Source)
-No API keys, no monthly fees (beyond Solana gas), no dashboard. You talk directly with the immutable smart contract. 
+## Quick Tour
 
-### A. Document Hashing (Client-Side)
-Everything is generated client-side to ensure documents never touch external servers unhashed.
+The library is designed to be extremely intuitive whether you're using our hosted APIs or opting for the direct integration.
+
+### Method 1: Hosted Platform (SipHeron Client)
+For developers integrating the SaaS workflow (generating PDF Certificates, maintaining managed analytics dashboards, fetching compliance logs). *Requires a SipHeron API Key (except on devnet placeholder routes).*
 
 ```typescript
-import { hashDocument, hashFile, hashStream, hashBase64 } from '@sipheron/vdr-core'
+import { SipHeron } from '@sipheron/vdr-core'
+import { readFileSync } from 'fs'
 
-// Browser: File / Blob
-const hash1 = await hashDocument(fileBuffer)
+// 1. Initialize client
+const sipheron = new SipHeron({
+  apiKey: process.env.SIPHERON_API_KEY,  // Required for mainnet
+  network: 'mainnet'                     // or 'devnet'
+})
 
-// Node.js: Disc files
-const hash2 = await hashFile('/path/to/contract.pdf')
+const documentBuffer = readFileSync('./legal-contract.pdf')
 
-// Streams (Node or Web Streams)
-const hash3 = await hashStream(readableStream)
+// 2. Anchor a document 
+// The SDK hashes the file LOCALLY, then transmits only the 64-char hash.
+const record = await sipheron.anchor({
+  file: documentBuffer, 
+  name: 'Employment Verification' 
+})
+console.log('Document anchored at:', record.timestamp)
+console.log('Certificate URL:', record.verificationUrl)
 
-// APIs: Base64
-const hash4 = await hashBase64('JVBERi0xLjQKJcOkw...')
+// 3. Verify a document's authenticity
+const verification = await sipheron.verify({ file: documentBuffer })
+
+if (verification.authentic) {
+  console.log('Valid! Anchored at:', verification.verifiedAt)
+} else if (verification.status === 'revoked') {
+  console.warn('Document is perfectly intact, but has been SUPERSEDED!')
+  console.warn('Reason:', verification.revocation?.reason)
+} else {
+  console.error('TAMPERED OR UNKNOWN DOCUMENT')
+}
+
+// 4. Record Soft Revocation (Compliance)
+// Mark an anchor as superseded without destroying the cryptographic truth.
+await sipheron.anchors.revoke(record.id, {
+  reason: 'superseded',
+  note: 'Replaced by NextGen Amendment V2',
+  supersededByAnchorId: 'anc_NEW_ID_HERE'
+})
 ```
 
-### B. Direct Anchoring to Solana
-You bring your own Solana Keypair. The library invokes the SipHeron Contract on-chain directly via JSON RPC.
+### Method 2: Direct, On-Chain Usage (Open Source)
+No API keys, no monthly fees (beyond Solana gas), no dashboard. You authorize transactions with your own wallet directly against the smart contract.
 
+**A. Generate local fingerprints:**
+```typescript
+import { hashDocument } from '@sipheron/vdr-core'
+
+// Everything is hashed locally.
+const documentHash = await hashDocument(fileBuffer, { algorithm: 'sha256' })
+```
+
+**B. Write directly to Solana:**
 ```typescript
 import { anchorToSolana } from '@sipheron/vdr-core'
 import { Keypair } from '@solana/web3.js'
 
-const issuerKeypair = Keypair.fromSecretKey(...) // Your wallet
+const issuerKeypair = Keypair.fromSecretKey(...) // Load your local wallet
 
 const result = await anchorToSolana({
-  buffer: fileBuffer,
+  hash: documentHash,
   keypair: issuerKeypair,
   network: 'mainnet',
   metadata: 'My Private Contract v1.2' 
@@ -89,11 +121,10 @@ console.log('Record PDA Address:', result.pda)
 console.log('Solana Transaction:', result.explorerUrl)
 ```
 
-### C. Direct On-Chain Verification
-Look up your anchor explicitly parsing the Program Data Accounts.
-
+**C. Direct On-Chain Verification:**
+Look up your anchor explicitly parsing the Program Data Accounts from an RPC node.
 ```typescript
-import { verifyOnChain, deriveAnchorAddress } from '@sipheron/vdr-core'
+import { verifyOnChain } from '@sipheron/vdr-core'
 
 const check = await verifyOnChain({
   hash: documentHash,
@@ -101,11 +132,58 @@ const check = await verifyOnChain({
   ownerPublicKey: issuerKeypair.publicKey
 })
 
-console.log(check.authentic) // true if hash matches and not revoked
+console.log('Authentic:', check.authentic) // true if hash matches and not revoked
 ```
 
-### D. Webhook Verification
-If your server receives SipHeron Webhooks (when using the hosted platform), manually verify signatures cryptographically using constant-time comparison.
+---
+
+## Handling Large Files (Streaming)
+
+Sometimes documents are too large (like 5GB uncompressed datasets) to buffer into RAM safely. VDR Core exposes streaming APIs:
+
+```typescript
+import { hashFileStream } from '@sipheron/vdr-core'
+import { createReadStream } from 'fs'
+
+const stream = createReadStream('/path/to/massive-video-file.mp4')
+
+const hash = await hashFileStream(stream, {
+  onProgress: (bytesRead) => {
+    console.log(`Hashed ${bytesRead} bytes...`)
+  }
+})
+
+console.log('Final fingerprint:', hash)
+```
+
+---
+
+## Error Handling
+
+VDR Core exports structured, programmatic error classes so you can handle failures predictably in production workflows:
+
+```typescript
+import { 
+  ValidationError, 
+  AuthenticationError, 
+} from '@sipheron/vdr-core'
+
+try {
+  await sipheron.anchorBatch(...)
+} catch (err) {
+  if (err instanceof AuthenticationError) {
+    console.error('Invalid or missing API key')
+  } else if (err instanceof ValidationError) {
+    console.error('Invalid input provided to the SDK')
+  }
+}
+```
+
+---
+
+## Real-time Webhooks
+
+If your backend is capturing Webhooks emitted from SipHeron's managed platform, always cryptographically guarantee they originated from SipHeron:
 
 ```typescript
 import { parseWebhookEvent } from '@sipheron/vdr-core'
@@ -121,93 +199,12 @@ console.log(event.type) // 'anchor.confirmed'
 
 ---
 
-## 2. Hosted Platform Usage (SipHeron Client)
-For developers looking to integrate the SaaS aspects (generating PDF Certificates, maintaining managed analytics dashboards, fetching hosted compliance logs), the SDK exposes the exact same logic over our convenience wrapper API.
+## Resources & Community
 
-```typescript
-import { SipHeron } from '@sipheron/vdr-core'
+- 📚 **Documentation:** Check out our [Full API Reference](https://docs.sipheron.com).
+- 🐛 **Issue Tracker:** Found a bug? Open an issue on our [GitHub Repo](https://github.com/SipHeron-VDR/vdr-core/issues).
+- 💬 **Discord:** Join the [community discussion](https://discord.gg/sipheron).
 
-// 1. Initialize client
-const sipheron = new SipHeron({
-  apiKey: process.env.SIPHERON_API_KEY,
-  network: 'devnet' // or 'mainnet'
-})
+### Security
 
-// 2. Wrap and anchor via Platform 
-const record = await sipheron.anchors.create({
-  file: documentBuffer, 
-  name: 'Employment Verification' 
-})
-console.log('Certificate URL:', record.verificationUrl)
-
-// 3. Batch Verification API
-const verification = await sipheron.verify({ file: documentBuffer })
-
-// 4. Real-time Anchor Monitoring
-import { AnchorMonitor } from '@sipheron/vdr-core'
-
-const monitor = new AnchorMonitor(sipheron)
-const anchor = await sipheron.anchor({ file: documentBuffer, name: 'Contract' })
-
-monitor
-  .watch(anchor.id)
-  .on('confirmation', (id, count) => {
-    console.log(`${id}: ${count} confirmations`)
-  })
-  .on('confirmed', (result) => {
-    console.log('Fully confirmed:', result.verificationUrl)
-    // Trigger downstream workflow here
-  })
-  .on('failed', (id, error) => {
-    console.error('Anchor failed:', error.message)
-  })
-```
-
----
-
-## Error Handling
-
-Clean, consistent, programmatic error classes. 
-
-```typescript
-import { 
-  SipHeronError, 
-  SolanaConnectionError, 
-  TransactionError, 
-  HashMismatchError 
-} from '@sipheron/vdr-core'
-
-try {
-  await anchorToSolana(...)
-} catch (err) {
-  if (err instanceof TransactionError) {
-    console.log('Wallet rejected or Tx dropped')
-  }
-}
-```
-
----
-
-## Interactive Studio Example
-
-If you want to fully test the direct engine visually, we built a stunning Interactive Studio directly into our `examples` directory:
-
-```bash
-cd examples/vdr-studio
-npm install
-node server.js
-```
-
-Navigate to `http://localhost:3050` to drag-and-drop secure documents, generate PDAs, hash completely client-side, and directly verify/anchor to Solana.
-
----
-
-## Building
-
-```bash
-npm run build
-```
-
-## Licensing & Security
-
-Open Source SDK licensed under standard Apache-2.0. To report a security vulnerability or timing attack related bug within Hashing/Webhook signatures, please coordinate via `security@sipheron.com`.
+Open Source SDK licensed under **Apache-2.0**. To report a security vulnerability or timing attack related bug within Hashing/Webhook signatures, please coordinate via `security@sipheron.com` before posting publicly.

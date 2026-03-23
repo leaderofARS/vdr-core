@@ -1,63 +1,86 @@
-# CONTRIBUTING -SipHeron
+# Contributing to SipHeron VDR Core
 
-The `@sipheron/vdr-core` execution framework invites rigorous operational improvements from the broader cryptographic engineering ecosystem. 
+So you want to contribute to the engine of decentralized document trust? Awesome! 
 
-All external pull requests and structural enhancements are subject to extremely rigorous code review procedures. Maintenance evaluations prioritize systemic immutability paradigms, zero-trust execution bounds, and strictly optimized algorithmic computation over implementation speed.
+We welcome contributions of all sizes and skill levels. By contributing to `vdr-core`, you're helping secure thousands of documents cryptographically on the Solana blockchain.
+
+## Table of Contents
+1. [Code of Conduct](#code-of-conduct)
+2. [Project Philosophy](#project-philosophy)
+3. [Setting Up Your Development Environment](#setting-up-your-development-environment)
+4. [Testing Guidelines](#testing-guidelines)
+5. [Pull Request Process](#pull-request-process)
+6. [Architectural Contributions](#architectural-contributions)
 
 ---
 
-## 1. Local Provisioning Architecture
+## Code of Conduct
 
-Establish a fully-isolated sandbox pipeline optimized for unit testing matrices:
+This project and everyone participating in it is governed by the [SipHeron Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
+---
+
+## Project Philosophy
+
+When writing code for `vdr-core`, remember these three golden rules:
+
+1. **Zero-Knowledge (No Unhashed Data Transfers):** We *never* send raw files over the internet. Any new `anchor()` method or wrapper must hash the document locally before communicating with the API or an RPC node.
+2. **Deterministic Processing:** Hashes must be pure and reproducible. Streaming chunks must calculate exactly identical buffers to file pointers.
+3. **No Lock-In:** The SDK must always provide two paths. The `DIRECT` path (requires no SipHeron account, communicates straight to Solana RPC using a user-provided Keypair) and the `HOSTED` path (communicates with our managed API infrastructure).
+
+---
+
+## Setting Up Your Development Environment
+
+### Prerequisites
+- Node.js (v18.0.0 or higher)
+- npm (v8.0.0 or higher)
+- A basic understanding of Solana Keypairs (optional, but encouraged for Direct testing)
+
+### Installation
+1. Fork the repo.
+2. Clone your fork locally.
+3. Install dependencies:
+   ```bash
+   cd vdr-core
+   npm install
+   ```
+4. Build the TypeScript core:
+   ```bash
+   npm run build
+   ```
+
+---
+
+## Testing Guidelines
+
+Because `vdr-core` handles cryptography and blockchain state, our test suite is extensive and highly rigid.
+
+**Run all tests:**
 ```bash
-git clone https://github.com/SipHeron-VDR/vdr-core
-cd vdr-core
-npm install
-cp .env.example .env 
-# Inject institutional sandbox API keys within .env parameters
-npm test
-npm run build
+npm run test
 ```
 
-## 2. Fundamental Optimization Boundaries
+### Adding New Tests
+If you add a feature, you *must* add a corresponding test in the `tests/` directory using Jest.
+- Are you adding a new `HashAlgorithm`? Add a vector collision test in `tests/hash/`.
+- Are you changing API behavior? Mock the Axios payload in `tests/client/`.
 
-The `vdr-core` library partitions distinct operational behavior into strictly isolated execution planes:
+**Do not check in Solana secret keys.** All tests must use randomly generated Keypairs for Direct testing.
 
-| Implementation Plane | Structural Execution Pathway |
-| ---- | ----------- |
-| `src/hash/` | Zero-trust local computational bounds mapping to `crypto.createHash` streams. *Always client-side.* |
-| `src/anchor/` | External payload routing directed to Solana RPC nodes parsing PoH state blocks.  |
-| `src/verify/` | Immutable state validation sequences parsing scalar data structures against distributed records. |
-| `src/client/` | High-throughput linear exponential backoff HTTP communication pipelines with geometric retry structures. |
-| `src/errors/` | Formal domain-specific architectural error hierarchies ensuring explicit type-safe crash responses. |
+---
 
-## 3. Exclusion Architecture
+## Pull Request Process
 
-To preserve runtime constraint metrics and API minimization, structural pathways containing the following logic patterns **must be explicitly rejected**:
+1. Create a feature branch originating from `master`. (`git checkout -b feature/streaming-hashes`)
+2. Make your programmatic changes, adhering to the standard strict TypeScript syntax without any `@ts-ignore` overrides unless explicitly reviewed.
+3. Ensure PRs pass `npm run test` and `npm run build`.
+4. Update the `CHANGELOG.md` with your modifications under the `[Unreleased]` tag in the format described there.
+5. Create a descriptive PR outlining what problem your code solves. 
+6. Wait for a core protocol maintainer to review your code. 
 
-❌ Client-side UI Rendering or Dashboard Extrapolation  
-❌ Multi-tenant DB Relational Models (Prisma, PostgreSQL interfaces)  
-❌ Execution Framework Logic (Express middleware, Webhook transport routers)  
-❌ End-User Authentication State Matrices  
-❌ Keypair Structs or Hardware Seed Management  
+## Architectural Contributions
 
-**The core directive fundamentally forbids implementation mappings that construct pathways capable of transmitting unhashed local payload buffers (`Buffer`) across arbitrary node gateways.**
+If you are proposing a massive architectural rewrite (e.g. migrating off `axios` to `fetch`, or modifying the Solana PDA seeds), please open an Issue with the tag `[architecture]` to discuss it prior to writing massive amounts of code. 
 
-## 4. Institutional Engineering Directives
-
-- **Timing Safe Validations**: Routine scalar modifications validating sequences against state memory arrays must exclusively invoke `constant-time` metric analysis paradigms (i.e. `crypto.timingSafeEqual`).
-- **Strictly-Typed Modeling**: Systemic modifications must carry exhaustive static type mappings configured within `src/types/`. Implicit assumptions (e.g. broad `any` returns) will be explicitly flagged for deprecation during architectural reviews.
-- **100% Deterministic Code Coverage**: Modified state pathways must be rigorously supported via `jest` deterministic test frameworks emphasizing absolute failure-state execution mapping and edge-bounds handling (for operations like zero-byte payloads or malicious inputs).
-
-## 5. Structural Deployment Strategy 
-
-When generating systemic optimizations or addressing open triage tickets, integrators must operate within proper operational sequences:
-
-1. Formulate a detached structural branch: `git checkout -b chore/systemic-upgrade`
-2. Configure tests mapped precisely to behavioral assumptions.
-3. Validate operational compliance via base runtime suites: `npm test && npm run build`
-4. Assemble Pull Request annotations explicitly mapping downstream infrastructural dependencies and failure vectors.
-5. An institutional maintainer will independently review testing metrics bounding the deployment parameters.
-
-*For rigorous escalation requirements or institutional discussion:* `dev@sipheron.com`
+Thank you for helping us make the internet more verifiable!

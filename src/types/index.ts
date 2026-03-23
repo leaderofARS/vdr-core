@@ -26,7 +26,9 @@ export type {
   AnchorResult,
   AnchorStatus,
   HashAlgorithm,
-  HashOptions
+  HashOptions,
+  RevocationReason,
+  RevocationRecord
 } from './anchor'
 
 export type {
