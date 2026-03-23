@@ -68,6 +68,12 @@ export {
   getCertificateProofText,
 } from './certificate'
 
+// ── Metadata Schema & Validation ──
+export { 
+  validateMetadata, LEGAL_CONTRACT_SCHEMA, CLINICAL_TRIAL_SCHEMA 
+} from './schema'
+export type { MetadataSchema, ValidationResult, ValidationSuccess, ValidationFailure } from './schema'
+
 // ── Solana utilities ──
 export {
   getExplorerUrl,
