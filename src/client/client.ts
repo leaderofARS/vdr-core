@@ -73,6 +73,16 @@ export class SipHeron {
         () => this.http.post(`/api/anchors/${anchorId}/revoke`, options),
         this.config.retries
       )
+    },
+    getVersionChain: async (anchorId: string): Promise<AnchorResult[]> => {
+      const endpoint = !this.config.apiKey 
+        ? `/api/playground/chain/${anchorId}` 
+        : `/api/hashes/${anchorId}/chain`
+      const response = await withRetry(
+        () => this.http.get(endpoint),
+        this.config.retries
+      )
+      return response.data.chain.map((c: any) => this._mapAnchorResponse(c))
     }
   }
 
@@ -174,6 +184,7 @@ export class SipHeron {
         hashAlgorithm: algorithm,
         filename: options.name || options.metadata?.name || null,
         metadata: options.name || options.metadata?.name || null,
+        previousAnchorId: options.previousAnchorId || null,
         ...(options.metadata && { tags: Object.keys(options.metadata) }),
       }, { headers }),
       this.config.retries

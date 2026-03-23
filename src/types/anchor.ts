@@ -64,6 +64,8 @@ export interface AnchorOptions {
   idempotencyKey?: string
   /** The hashing algorithm to use for the document fingerprint. Default: 'sha256' */
   hashAlgorithm?: HashAlgorithm
+  /** Link to an earlier version of this document (by Anchor ID) */
+  previousAnchorId?: string
 }
 
 export interface AnchorResult {
