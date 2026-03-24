@@ -1,95 +1,92 @@
-/**
- * @module webhook/verify
- *
- * @description
- * HMAC-SHA256 webhook signature verification for SipHeron platform events.
- *
- * When the SipHeron platform calls your webhook endpoint it sends a
- * `X-SipHeron-Signature` header containing the HMAC-SHA256 of the raw request
- * body, keyed with your webhook secret. **Always verify this signature before
- * processing the event payload** to ensure the request is authentic and
- * has not been tampered with in transit.
- *
- * ## Security guarantees
- * - Uses `crypto.timingSafeEqual` — execution time is constant regardless of
- *   where a byte mismatch occurs, preventing timing-based forgery attacks.
- * - Signature comparison works on `Buffer` objects of identical length to
- *   avoid implicit length-leaking comparisons.
- *
- * ## `verifyWebhookSignature(opts)`
- * Low-level signature check — returns `true` / `false`.
- * Use when you want to handle verification failure yourself.
- *
- * ## `parseWebhookEvent(opts)`
- * All-in-one: verifies signature AND parses the JSON body.
- * Throws `SipHeronError` (code: `WEBHOOK_SIGNATURE_INVALID`) on bad signature,
- * or `ValidationError` if the body is not valid JSON.
- *
- * @example
- * ```ts
- * import express from 'express'
- * import { parseWebhookEvent } from '@sipheron/vdr-core'
- *
- * app.post('/webhooks/sipheron', express.raw({ type: '*\/*' }), (req, res) => {
- *   const event = parseWebhookEvent({
- *     body: req.body.toString(),
- *     signature: req.headers['x-sipheron-signature'] as string,
- *     secret: process.env.SIPHERON_WEBHOOK_SECRET!,
- *   })
- *   console.log(event.event) // 'anchor.confirmed'
- *   res.sendStatus(200)
- * })
- * ```
- */
 import { createHmac, timingSafeEqual } from 'crypto'
 import { WebhookEvent } from '../types'
 import { SipHeronError, ValidationError } from '../errors'
 
 export interface WebhookVerifyOptions {
+  tolerance?: number     // seconds, default 300 (5 min)
+  throwOnExpired?: boolean
+}
+
+export function verifyWebhookSignature(params: {
   payload: string | Buffer
   signature: string
   secret: string
-  tolerance?: number
+  options?: WebhookVerifyOptions
+}): { valid: boolean; expired: boolean; event?: WebhookEvent } {
+  const { payload, signature, secret, options = {} } = params
+  const tolerance = options.tolerance ?? 300
+
+  if (!payload || !signature || !secret) {
+    return { valid: false, expired: false }
+  }
+
+  // Parse signature header: t=timestamp,v1=hash
+  const parts = signature.split(',')
+  const timestampStr = parts.find(p => p.startsWith('t='))?.slice(2)
+  const hash = parts.find(p => p.startsWith('v1='))?.slice(3)
+
+  let timestamp = parseInt(timestampStr ?? '0', 10)
+  
+  // Backwards compatibility for raw hex hashes (no t=,v1=)
+  if (!timestampStr && !hash) {
+    timestamp = Date.now() // Bypass age check for old payloads
+  }
+
+  const actualHash = hash || signature
+
+  // Check timestamp tolerance
+  const age = Math.floor(Date.now() / 1000) - timestamp
+  // If age is huge because of Date.now() difference, it means no timestamp was given (backwards compat)
+  // Wait, if timestamp=Date.now(), age is roughly - (Date.now()/1000). Let's fix that.
+  let expired = false
+  if (timestampStr) {
+    expired = age > tolerance
+  }
+
+  if (expired && options.throwOnExpired) {
+    throw new Error(`Webhook expired: ${age}s old (tolerance: ${tolerance}s)`)
+  }
+
+  const payloadStr = Buffer.isBuffer(payload) ? payload.toString('utf-8') : payload
+
+  // Verify HMAC
+  let expectedHash;
+  if (timestampStr) {
+    expectedHash = createHmac('sha256', secret)
+      .update(`${timestamp}.${payloadStr}`)
+      .digest('hex')
+  } else {
+    expectedHash = createHmac('sha256', secret)
+      .update(payloadStr)
+      .digest('hex')
+  }
+
+  let valid = false
+  try {
+    const sigBuffer = Buffer.from(actualHash, 'utf8')
+    const computedBuffer = Buffer.from(expectedHash, 'utf8')
+    if (sigBuffer.length === computedBuffer.length) {
+      valid = timingSafeEqual(sigBuffer, computedBuffer)
+    }
+  } catch (err) {
+    // ignore
+  }
+
+  if (!valid) return { valid: false, expired }
+
+  try {
+    const event = JSON.parse(payloadStr) as WebhookEvent
+    return { valid: true, expired, event }
+  } catch {
+    return { valid: true, expired }
+  }
 }
 
 export interface WebhookParseOptions {
-  body: string
+  body: string | Buffer
   signature: string
   secret: string
-}
-
-/**
- * Verify a SipHeron webhook signature exactly.
- * Uses constant-time equality to prevent timing attacks.
- */
-export function verifyWebhookSignature({
-  payload,
-  signature,
-  secret
-}: WebhookVerifyOptions): boolean {
-  if (!payload || !signature || !secret) {
-    return false
-  }
-
-  try {
-    const payloadBuffer = Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf-8')
-    const computedSignature = createHmac('sha256', secret)
-      .update(payloadBuffer)
-      .digest('hex')
-
-    // Optional: if signatures in SipHeron use timestamps (e.g. `t=123,v1=abc`),
-    // you would parse that here. For now, assuming direct HMAC hex.
-    const sigBuffer = Buffer.from(signature, 'utf8')
-    const computedBuffer = Buffer.from(computedSignature, 'utf8')
-
-    if (sigBuffer.length !== computedBuffer.length) {
-      return false
-    }
-
-    return timingSafeEqual(sigBuffer, computedBuffer)
-  } catch (err) {
-    return false
-  }
+  tolerance?: number
 }
 
 /**
@@ -98,21 +95,75 @@ export function verifyWebhookSignature({
 export function parseWebhookEvent({
   body,
   signature,
-  secret
+  secret,
+  tolerance
 }: WebhookParseOptions): WebhookEvent {
-  const isValid = verifyWebhookSignature({
+  const result = verifyWebhookSignature({
     payload: body,
     signature,
-    secret
+    secret,
+    options: { tolerance, throwOnExpired: true }
   })
 
-  if (!isValid) {
+  if (!result.valid) {
     throw new SipHeronError('Invalid webhook signature', 'WEBHOOK_SIGNATURE_INVALID', 401)
   }
 
-  try {
-    return JSON.parse(body) as WebhookEvent
-  } catch (err) {
+  if (!result.event) {
     throw new ValidationError('Webhook payload is not valid JSON')
+  }
+
+  return result.event
+}
+
+// Framework-specific helpers
+export const webhookMiddleware = {
+  express: (secret: string) => (req: any, res: any, next: any) => {
+    const { valid } = verifyWebhookSignature({
+      payload: req.rawBody,
+      signature: req.headers['x-sipheron-signature'] as string,
+      secret
+    })
+    if (!valid) return res.status(401).json({ error: 'Invalid signature' })
+    next()
+  },
+
+  nextjs: (secret: string) => async (req: any) => {
+    const body = await req.text()
+    const { valid } = verifyWebhookSignature({
+      payload: body,
+      signature: req.headers.get('x-sipheron-signature') ?? '',
+      secret
+    })
+    return valid
+  },
+
+  fastify: (secret: string) => (req: any, reply: any, done: any) => {
+    const { valid } = verifyWebhookSignature({
+      payload: req.rawBody,
+      signature: req.headers['x-sipheron-signature'] as string,
+      secret
+    })
+    if (!valid) return reply.status(401).send({ error: 'Invalid signature' })
+    done()
+  },
+
+  awsLambda: (secret: string) => (event: any) => {
+    const { valid } = verifyWebhookSignature({
+      payload: event.body,
+      signature: event.headers['x-sipheron-signature'] ?? event.headers['X-Sipheron-Signature'] ?? '',
+      secret
+    })
+    return valid
+  },
+
+  cloudflare: (secret: string) => async (req: any) => {
+    const body = await req.clone().text()
+    const { valid } = verifyWebhookSignature({
+      payload: body,
+      signature: req.headers.get('x-sipheron-signature') ?? '',
+      secret
+    })
+    return valid
   }
 }

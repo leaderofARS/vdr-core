@@ -394,6 +394,9 @@ export class SipHeron {
     limit?: number
     status?: string
     search?: string
+    from?: string
+    to?: string
+    tag?: string
   }): Promise<{ records: AnchorResult[]; total: number; page: number; pages: number }> {
     if (!this.config.apiKey) {
       throw new AuthenticationError('apiKey is required to list hashes.')
@@ -404,6 +407,9 @@ export class SipHeron {
     if (options?.limit) params.set('limit', String(options.limit))
     if (options?.status) params.set('status', options.status)
     if (options?.search) params.set('search', options.search)
+    if (options?.from) params.set('from', options.from)
+    if (options?.to) params.set('to', options.to)
+    if (options?.tag) params.set('tag', options.tag)
 
     const response = await withRetry(
       () => this.http.get(`/api/hashes?${params}`),
