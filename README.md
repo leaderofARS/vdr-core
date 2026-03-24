@@ -23,7 +23,8 @@ SipHeron is built on the philosophy of **true, autonomous cryptographic independ
 - **Dual Architecture**: Choose between `DIRECT` (talk directly to Solana RPC nodes using your own wallet) or `HOSTED` (use the SipHeron API for convenience, dashboards, and advanced features).
 - **Streaming Hashes**: Built-in support for hashing massive files in chunks without blowing up your RAM.
 - **Soft Revocation Registry**: Mark documents as officially superseded or revoked without deleting the immutable blockchain record.
-- **Webhook Verification**: Cryptographically verify HMAC signatures for backend infrastructure hooks.
+- **Webhook Security Toolkit**: Cryptographically verify HMAC signatures for backend infrastructure hooks with built-in replay attack prevention.
+- **Integrity Reports**: Programmatically generate audit-ready PDF reports aggregating proof of documents.
 
 ---
 
@@ -158,6 +159,25 @@ console.log('Final fingerprint:', hash)
 
 ---
 
+## 📄 Integrity Reports
+
+Enterprise buyers, auditors, and compliance officers often require a human-readable summary of anchored documents. You can natively generate professional PDF reports providing a comprehensive chain of custody for any date range or tag set:
+
+```typescript
+import { generatePdfReport } from '@sipheron/vdr-core'
+import { writeFileSync } from 'fs'
+
+const pdfBytes = await generatePdfReport({
+  anchors: [anchor1, anchor2], // or fetch from sipheron.list()
+  dateRangeStr: 'Q1-2026',
+  solanaNetwork: 'mainnet'
+})
+
+writeFileSync('./audit_report.pdf', pdfBytes)
+```
+
+---
+
 ## Error Handling
 
 VDR Core exports structured, programmatic error classes so you can handle failures predictably in production workflows:
@@ -186,15 +206,24 @@ try {
 If your backend is capturing Webhooks emitted from SipHeron's managed platform, always cryptographically guarantee they originated from SipHeron:
 
 ```typescript
-import { parseWebhookEvent } from '@sipheron/vdr-core'
+import { parseWebhookEvent, webhookMiddleware } from '@sipheron/vdr-core'
 
+// Method 1: Manual parsing with timestamp tolerance (replay protection)
 const event = parseWebhookEvent({
-  body: rawRequestBody,
+  body: rawRequestBodyStr,
   signature: req.headers['x-sipheron-signature'],
-  secret: process.env.SIPHERON_WEBHOOK_SECRET
+  secret: process.env.SIPHERON_WEBHOOK_SECRET,
+  tolerance: 300 // Reject signatures older than 5 minutes
 })
 
 console.log(event.type) // 'anchor.confirmed'
+
+// Method 2: Framework specific drop-in Middleware
+// Supported: express, nextjs, fastify, awsLambda, cloudflare
+app.post('/webhook', express.raw({ type: 'application/json' }), webhookMiddleware.express(process.env.WEBHOOK_SECRET), (req, res) => {
+  console.log('Valid Payload!')
+  res.send('OK')
+})
 ```
 
 ---

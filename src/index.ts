@@ -57,8 +57,12 @@ export {
 export { hashDocumentBrowser, hashAuto } from './hash'
 export { verifyHashStandalone as verifyHash } from './verify'
 export { verifyLocally, verifyOnChain, deriveAnchorAddress } from './verify'
-export { verifyWebhookSignature, parseWebhookEvent } from './webhook'
+export { verifyWebhookSignature, parseWebhookEvent, webhookMiddleware } from './webhook'
 export { VerificationCache } from './verify/cache'
+
+// ── Report utilities ──
+export { generatePdfReport } from './report/index'
+export type { ReportOptions } from './report/index'
 
 // ── Certificate utilities ──
 export {

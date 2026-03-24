@@ -12,5 +12,5 @@
  *
  * @see {@link module:webhook/verify} for full documentation and usage examples.
  */
-export { verifyWebhookSignature, parseWebhookEvent } from './verify'
+export { verifyWebhookSignature, parseWebhookEvent, webhookMiddleware } from './verify'
 export type { WebhookVerifyOptions, WebhookParseOptions } from './verify'
