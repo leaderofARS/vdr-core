@@ -33,7 +33,9 @@ app.post('/api/analyze', upload.single('document'), async (req, res) => {
       const keypairPath = `${os.homedir()}/.config/solana/id.json`;
       const secret = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
       dummyOwner = Keypair.fromSecretKey(Uint8Array.from(secret));
-    } catch(e) { dummyOwner = Keypair.generate(); }
+    } catch(e) { 
+      return res.status(500).json({ error: 'Solana keypair file (~/.config/solana/id.json) not found or invalid. Please run "solana-keygen new" first.' });
+    }
     
     const pda = deriveAnchorAddress(hash, dummyOwner.publicKey, 'devnet');
     
@@ -60,7 +62,9 @@ app.post('/api/verify', upload.single('document'), async (req, res) => {
       const keypairPath = `${os.homedir()}/.config/solana/id.json`;
       const secret = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
       ownerKeypair = Keypair.fromSecretKey(Uint8Array.from(secret));
-    } catch(e) { ownerKeypair = Keypair.generate(); }
+    } catch(e) { 
+      return res.status(500).json({ error: 'Solana keypair file (~/.config/solana/id.json) not found or invalid. Please run "solana-keygen new" first.' });
+    }
 
     const ownerPublicKey = ownerKeypair.publicKey.toBase58();
 
@@ -94,8 +98,7 @@ app.post('/api/anchor', upload.single('document'), async (req, res) => {
       const secret = JSON.parse(fs.readFileSync(keypairPath, 'utf8'));
       anchorKeypair = Keypair.fromSecretKey(Uint8Array.from(secret));
     } catch (e) {
-      console.warn("Could not load ~/.config/solana/id.json. Using empty dummy wallet.");
-      anchorKeypair = Keypair.generate();
+      return res.status(500).json({ error: 'Solana keypair file (~/.config/solana/id.json) not found or invalid. Use "solana-keygen new" to create one.' });
     }
 
     try {

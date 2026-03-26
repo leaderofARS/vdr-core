@@ -1,5 +1,9 @@
 import { VerificationResult } from '../types'
-import * as fs from 'fs'
+
+// Dynamic import for 'fs' to support browser environments
+const isNode = typeof process !== 'undefined' && !!process.versions && !!process.versions.node
+const isBrowser = !isNode
+
 
 /**
  * Single entry in the verification cache.
@@ -135,8 +139,9 @@ export class VerificationCache {
   }
 
   private loadFromDisk(): void {
-    if (!this.persistPath) return
+    if (!this.persistPath || isBrowser) return
     try {
+      const fs = require('fs')
       if (!fs.existsSync(this.persistPath)) return
       const raw = fs.readFileSync(this.persistPath, 'utf-8')
       const data = JSON.parse(raw)
@@ -151,8 +156,9 @@ export class VerificationCache {
   }
 
   private saveToDisk(): void {
-    if (!this.persistPath) return
+    if (!this.persistPath || isBrowser) return
     try {
+      const fs = require('fs')
       const data = Object.fromEntries(this.cache)
       fs.writeFileSync(this.persistPath, JSON.stringify(data, null, 2), 'utf-8')
     } catch {

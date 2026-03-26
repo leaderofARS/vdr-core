@@ -33,6 +33,11 @@ function main() {
     return;
   }
 
+  // OPT-IN ONLY: Only unpack if the user explicitly requested it via environment variable
+  if (!process.env.SIPHERON_VDR_INSTALL_EXAMPLES) {
+    return;
+  }
+
   const examplesSrc = path.join(__dirname, '..', 'examples');
   const examplesDest = path.join(initCwd, 'sipheron-vdr-examples');
 
