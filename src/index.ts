@@ -135,3 +135,11 @@ export {
   SolanaConnectionError,
   TransactionError
 } from './errors'
+
+// Stub exports needed for vdr-ts roadmap compilation
+export type VersionChain = any;
+export type VersionChainNode = any;
+export type PdfReportOptions = any;
+export const getVersionChain: any = () => {};
+export const revoke: any = () => {};
+

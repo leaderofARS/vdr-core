@@ -1,6 +1,6 @@
 {
   "name": "@sipheron/vdr-core",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "SipHeron VDR-CORE Official JavaScript/TypeScript SDK. Cryptographically anchor documents to Solana.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,6 +28,8 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .ts",
     "postinstall": "node scripts/postinstall.js",
+    "login:chrome": "BROWSER='/mnt/c/Program Files/Google/Chrome/Application/chrome.exe' npm login",
+    "publish:chrome": "BROWSER='/mnt/c/Program Files/Google/Chrome/Application/chrome.exe' npm publish",
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
@@ -56,12 +58,15 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
-    "@solana/web3.js": "^1.98.4",
     "axios": "^1.6.0",
     "pdf-lib": "^1.17.1"
   },
+  "peerDependencies": {
+    "@solana/web3.js": "^1.98.4"
+  },
   "devDependencies": {
     "@jest/globals": "^30.3.0",
+    "@solana/web3.js": "^1.98.4",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "jest": "^29.5.0",

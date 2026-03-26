@@ -38,8 +38,11 @@ export const DEFAULT_CONFIRMATION: ConfirmationLevel = 'confirmed'
 export const MIN_CONFIRMATIONS = 1
 
 /**
- * Enterprise-grade confirmation depth.
- * For high-value documents, wait for this many confirmations.
+ * Enterprise-grade confirmation depth heuristic.
+ * 
+ * NOTE: Solana finality is time/slot-based rather than confirmation-count based.
+ * 32 slots (roughly 13-15 seconds) is the traditional threshold for maximum 
+ * confidence before a block is considered irreversible by the cluster.
  */
 export const ENTERPRISE_CONFIRMATIONS = 32
 

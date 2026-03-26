@@ -5,11 +5,11 @@
 
 export const KNOWN_HASHES = {
   // SHA-256 of the string "hello world\n"
-  HELLO_WORLD: 'a948904f2f0f479b8f936c90d9d3b1d1ab24ad55f0', // this will be properly computed in tests
+  HELLO_WORLD: 'a948904f2f0f479b8f936c90d9d3b1d1ab24ad55f0e13763941d279774653631',
   // SHA-256 of empty string
   EMPTY_STRING: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
   // SHA-256 of the string "SipHeron VDR"
-  SIPHERON_VDR: '', // computed in test setup
+  SIPHERON_VDR: '54e8156b825287e02581699fba30f2956cf5723b76426a88b4885664157d6928',
   // A known valid hash format (not a real anchor)
   VALID_FORMAT: 'a3f4b2c1d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5',
   // Invalid hash formats for error testing

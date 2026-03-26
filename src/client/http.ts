@@ -42,6 +42,7 @@ import {
   AnchorNotFoundError,
   SipHeronError,
 } from '../errors'
+import { withRetry as sharedRetry } from './retry'
 
 export function createHttpClient(config: ResolvedConfig): AxiosInstance {
   const defaultHeaders: Record<string, string> = {
@@ -134,34 +135,20 @@ export async function withRetry<T>(
   maxAttempts: number,
   baseDelayMs = 1000
 ): Promise<T> {
-  let lastError: Error
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn()
-    } catch (error) {
-      lastError = error as Error
-
+  return sharedRetry(fn, {
+    maxAttempts,
+    baseDelayMs,
+    shouldRetry: (error) => {
       // Do not retry on client errors (4xx) except rate limits
       if (error instanceof SipHeronError) {
-        const isRetryable =
+        return (
           error instanceof RateLimitError ||
           error instanceof NetworkError ||
           (error.statusCode !== undefined && error.statusCode >= 500)
-
-        if (!isRetryable) throw error
+        )
       }
-
-      if (attempt === maxAttempts) break
-
-      const delay = baseDelayMs * Math.pow(2, attempt - 1)
-      await sleep(delay)
+      return false
     }
-  }
-
-  throw lastError!
+  })
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}

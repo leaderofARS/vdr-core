@@ -79,7 +79,7 @@ export async function generatePdfReport(options: ReportOptions): Promise<Buffer>
   y = drawText('Document Inventory Table', margin, y, 18, true)
   y -= 20
 
-  const colX = [margin, margin + 80, margin + 200, margin + 270, margin + 340]
+  const colX = [margin, margin + 110, margin + 240, margin + 310, margin + 375]
   
   // Headers
   const drawRow = (row: string[], isHeader = false) => {
@@ -87,15 +87,17 @@ export async function generatePdfReport(options: ReportOptions): Promise<Buffer>
       page = pdfDoc.addPage([595.28, 841.89])
       y = height - margin
     }
-    page.drawText(row[0] || 'Unknown', { x: colX[0], y, size: 10, font: isHeader ? fontBold : font })
-    page.drawText(row[1], { x: colX[1], y, size: 10, font: isHeader ? fontBold : font })
-    page.drawText(row[2], { x: colX[2], y, size: 10, font: isHeader ? fontBold : font })
-    page.drawText(row[3], { x: colX[3], y, size: 10, font: isHeader ? fontBold : font })
+    const fontSize = isHeader ? 10 : 9
+    page.drawText(row[0] || 'Unknown', { x: colX[0], y, size: fontSize, font: isHeader ? fontBold : font })
+    page.drawText(row[1], { x: colX[1], y, size: fontSize, font: isHeader ? fontBold : font })
+    page.drawText(row[2], { x: colX[2], y, size: fontSize, font: isHeader ? fontBold : font })
+    page.drawText(row[3], { x: colX[3], y, size: fontSize, font: isHeader ? fontBold : font })
     
     // Attempt verification URL if given
     if (row[4]) {
-      const urlText = row[4].length > 40 ? row[4].substring(0, 37) + '...' : row[4]
-      page.drawText(urlText, { x: colX[4], y, size: 8, font, color: rgb(0, 0, 0.8) })
+      const maxUrlLen = 35
+      const urlText = row[4].length > maxUrlLen ? row[4].substring(0, maxUrlLen - 3) + '...' : row[4]
+      page.drawText(urlText, { x: colX[4], y, size: 7, font, color: rgb(0, 0, 0.8) })
     }
     y -= 15
   }
@@ -104,8 +106,8 @@ export async function generatePdfReport(options: ReportOptions): Promise<Buffer>
   y -= 5
 
   anchors.forEach(a => {
-    const name = a.name ? (a.name.length > 15 ? a.name.substring(0, 12) + '...' : a.name) : 'Untitled'
-    const shortHash = a.hash.substring(0, 16) + '...'
+    const name = a.name ? (a.name.length > 20 ? a.name.substring(0, 17) + '...' : a.name) : 'Untitled'
+    const shortHash = a.hash.substring(0, 18) + '...'
     const date = a.timestamp ? new Date(a.timestamp).toISOString().split('T')[0] : 'Unknown'
     const status = a.status.toUpperCase()
     drawRow([name, shortHash, date, status, a.verificationUrl || ''])
