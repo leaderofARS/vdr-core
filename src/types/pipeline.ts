@@ -1,6 +1,9 @@
 export type PipelineEventType = 'retrieval' | 'generation' | 'output' | 'custom';
 
 export interface PipelineEventPayload {
+  // Option: True defaults to scrubbing SSNs, IPs, emails natively off client systems.
+  scrubPii?: boolean;
+  
   eventType: PipelineEventType;
   stepName?: string;
   payload: Record<string, any>;

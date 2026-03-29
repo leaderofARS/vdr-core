@@ -50,6 +50,7 @@ import { createHttpClient, withRetry } from './http'
 import { hashDocument, isValidHash, normalizeHash, getAlgorithmInfo } from '../hash'
 import { ValidationError, AuthenticationError } from '../errors'
 import { VerificationCache } from '../verify/cache'
+import { scrubPayload } from '../pipeline/pii'
 
 /**
  * Main SipHeron VDR client.
@@ -100,8 +101,21 @@ export class SipHeron {
       if (!this.config.apiKey) {
         throw new AuthenticationError('apiKey is required to track AI telemetry events.')
       }
+      
+      let finalPayload = { ...payload }
+      
+      // Opt-out architecture (True by default for Zero-Knowledge)
+      if (finalPayload.scrubPii !== false) {
+        const { sanitized, piiDetected } = scrubPayload(finalPayload.payload)
+        finalPayload.payload = sanitized
+        // Always assert true if found, respect explicitly true otherwise
+        if (piiDetected) {
+           finalPayload.piiDetected = true
+        }
+      }
+
       const response = await withRetry(
-        () => this.http.post('/api/pipeline/events', payload),
+        () => this.http.post('/api/pipeline/events', finalPayload),
         this.config.retries
       )
       return response.data
@@ -115,8 +129,21 @@ export class SipHeron {
       if (!this.config.apiKey) {
         throw new AuthenticationError('apiKey is required to track bulk AI telemetry events.')
       }
+      
+      const scrubbedEvents = payload.events.map(event => {
+         const cloned = { ...event }
+         if (cloned.scrubPii !== false) {
+           const { sanitized, piiDetected } = scrubPayload(cloned.payload)
+           cloned.payload = sanitized
+           if (piiDetected) {
+             cloned.piiDetected = true
+           }
+         }
+         return cloned
+      })
+
       const response = await withRetry(
-        () => this.http.post('/api/pipeline/events/batch', payload),
+        () => this.http.post('/api/pipeline/events/batch', { events: scrubbedEvents }),
         this.config.retries
       )
       return response.data
