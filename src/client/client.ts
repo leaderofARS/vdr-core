@@ -38,6 +38,10 @@ import type {
   VerifyOptions,
   VerificationResult,
   RevocationReason,
+  PipelineEventPayload,
+  PipelineEventResult,
+  BatchPipelineEventPayload,
+  BatchPipelineEventResult
 } from '../types'
 import { anchorBatch, BatchAnchorOptions, BatchAnchorResult } from '../anchor/batch'
 import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
@@ -83,6 +87,39 @@ export class SipHeron {
         this.config.retries
       )
       return response.data.chain.map((c: any) => this._mapAnchorResponse(c))
+    }
+  }
+
+  public readonly pipeline = {
+    /**
+     * Store telemetry directly mapped into the core pipeline schemas for AI systems
+     * where you will be capturing inferences and prompt completions gracefully linked
+     * within the platform.
+     */
+    trackEvent: async (payload: PipelineEventPayload): Promise<PipelineEventResult> => {
+      if (!this.config.apiKey) {
+        throw new AuthenticationError('apiKey is required to track AI telemetry events.')
+      }
+      const response = await withRetry(
+        () => this.http.post('/api/pipeline/events', payload),
+        this.config.retries
+      )
+      return response.data
+    },
+    
+    /**
+     * Efficiently insert a batch of completed LLM events in bulk without blocking
+     * individual anchor processing loops locally.
+     */
+    trackBatch: async (payload: BatchPipelineEventPayload): Promise<BatchPipelineEventResult> => {
+      if (!this.config.apiKey) {
+        throw new AuthenticationError('apiKey is required to track bulk AI telemetry events.')
+      }
+      const response = await withRetry(
+        () => this.http.post('/api/pipeline/events/batch', payload),
+        this.config.retries
+      )
+      return response.data
     }
   }
 
