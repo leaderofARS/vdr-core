@@ -37,11 +37,7 @@ import type {
   HashAlgorithm,
   VerifyOptions,
   VerificationResult,
-  RevocationReason,
-  PipelineEventPayload,
-  PipelineEventResult,
-  BatchPipelineEventPayload,
-  BatchPipelineEventResult
+  RevocationReason
 } from '../types'
 import { anchorBatch, BatchAnchorOptions, BatchAnchorResult } from '../anchor/batch'
 import { resolveConfig, buildExplorerUrl, buildVerifyUrl } from './config'
@@ -50,7 +46,7 @@ import { createHttpClient, withRetry } from './http'
 import { hashDocument, isValidHash, normalizeHash, getAlgorithmInfo } from '../hash'
 import { ValidationError, AuthenticationError } from '../errors'
 import { VerificationCache } from '../verify/cache'
-import { scrubPayload } from '../pipeline/pii'
+import { PipelineModule } from '../pipeline'
 
 /**
  * Main SipHeron VDR client.
@@ -74,89 +70,49 @@ export class SipHeron {
       if (!this.config.apiKey) {
         throw new AuthenticationError('apiKey is required to revoke anchors.')
       }
-      await withRetry(
-        () => this.http.post(`/api/anchors/${anchorId}/revoke`, options),
-        this.config.retries
-      )
+      await this.request('POST', `/api/anchors/${anchorId}/revoke`, options)
     },
     getVersionChain: async (anchorId: string): Promise<AnchorResult[]> => {
       const endpoint = !this.config.apiKey 
         ? `/api/playground/chain/${anchorId}` 
         : `/api/hashes/${anchorId}/chain`
-      const response = await withRetry(
-        () => this.http.get(endpoint),
-        this.config.retries
-      )
-      return response.data.chain.map((c: any) => this._mapAnchorResponse(c))
+      const data = await this.request('GET', endpoint)
+      return data.chain.map((c: any) => this._mapAnchorResponse(c))
     }
   }
 
-  public readonly pipeline = {
-    /**
-     * Store telemetry directly mapped into the core pipeline schemas for AI systems
-     * where you will be capturing inferences and prompt completions gracefully linked
-     * within the platform.
-     */
-    trackEvent: async (payload: PipelineEventPayload): Promise<PipelineEventResult> => {
-      if (!this.config.apiKey) {
-        throw new AuthenticationError('apiKey is required to track AI telemetry events.')
-      }
-      
-      let finalPayload = { ...payload }
-      
-      // Opt-out architecture (True by default for Zero-Knowledge)
-      if (finalPayload.scrubPii !== false) {
-        const { sanitized, piiDetected } = scrubPayload(finalPayload.payload)
-        finalPayload.payload = sanitized
-        // Always assert true if found, respect explicitly true otherwise
-        if (piiDetected) {
-           finalPayload.piiDetected = true
-        }
-      }
-
-      const response = await withRetry(
-        () => this.http.post('/api/pipeline/events', finalPayload),
-        this.config.retries
-      )
-      return response.data
-    },
-    
-    /**
-     * Efficiently insert a batch of completed LLM events in bulk without blocking
-     * individual anchor processing loops locally.
-     */
-    trackBatch: async (payload: BatchPipelineEventPayload): Promise<BatchPipelineEventResult> => {
-      if (!this.config.apiKey) {
-        throw new AuthenticationError('apiKey is required to track bulk AI telemetry events.')
-      }
-      
-      const scrubbedEvents = payload.events.map(event => {
-         const cloned = { ...event }
-         if (cloned.scrubPii !== false) {
-           const { sanitized, piiDetected } = scrubPayload(cloned.payload)
-           cloned.payload = sanitized
-           if (piiDetected) {
-             cloned.piiDetected = true
-           }
-         }
-         return cloned
-      })
-
-      const response = await withRetry(
-        () => this.http.post('/api/pipeline/events/batch', { events: scrubbedEvents }),
-        this.config.retries
-      )
-      return response.data
-    }
-  }
+  public readonly pipeline: PipelineModule
 
   constructor(config: SipHeronConfig) {
     this.config = resolveConfig(config)
     this.http = createHttpClient(this.config)
+    this.pipeline = new PipelineModule(this)
     
     if (this.config.cache) {
       this.verifyCache = new VerificationCache(this.config.cache)
     }
+  }
+
+  /**
+   * Internal request helper with retry logic.
+   * @internal
+   */
+  public async request<T = any>(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    url: string,
+    data?: any,
+    params?: any
+  ): Promise<T> {
+    const response = await withRetry(
+      () => this.http.request({
+        method,
+        url,
+        data,
+        params,
+      }),
+      this.config.retries
+    )
+    return response.data
   }
 
   /**

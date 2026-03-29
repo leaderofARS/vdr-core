@@ -1,17 +1,44 @@
+/**
+ * @file types.ts
+ * @description Types for the RAG/AI Compliance Pipeline.
+ */
+
 export type PipelineEventType = 'retrieval' | 'generation' | 'output' | 'custom';
 export type ComplianceFramework = 'eu_ai_act' | 'soc2' | 'gdpr' | 'hipaa' | 'custom';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface PipelineEventPayload {
-  // Option: True defaults to scrubbing SSNs, IPs, emails natively off client systems.
-  scrubPii?: boolean;
-  
+  [key: string]: any;
+  _ai_metrics?: AiMetrics;
+}
+
+export interface AiMetrics {
+  modelId?: string | null;
+  modelVersion?: string | null;
+  promptTokens?: number | null;
+  completionTokens?: number | null;
+  totalCost?: number | null;
+  latencyMs?: number | null;
+  piiDetected?: boolean;
+  toxicityScore?: number | null;
+  groundingScore?: number | null;
+  userFeedback?: number | null;
+  temperature?: number | null;
+  maxTokens?: number | null;
+  topP?: number | null;
+  systemPromptHash?: string | null;
+  contextLength?: number | null;
+  generationSpeed?: number | null;
+  stopReason?: string | null;
+}
+
+export interface PipelineEventOptions {
   eventType: PipelineEventType;
   stepName?: string;
-  payload: Record<string, any>;
+  payload: any;
   pipelineId?: string;
-  complianceFramework?: string;
-  riskLevel?: string;
+  complianceFramework?: ComplianceFramework;
+  riskLevel?: RiskLevel;
   userId?: string;
   sessionId?: string;
   modelId?: string;
@@ -47,8 +74,8 @@ export interface PipelineEventResult {
   anchoredAt: string | null;
   blockNumber: string | null;
   blockTimestamp: string | null;
-  complianceFramework: string | null;
-  riskLevel: string | null;
+  complianceFramework: ComplianceFramework | null;
+  riskLevel: RiskLevel | null;
   userId: string | null;
   sessionId: string | null;
   modelId: string | null;
@@ -67,24 +94,11 @@ export interface PipelineEventResult {
   pdaExplorerUrl: string | null;
 }
 
-export interface BatchPipelineEventPayload {
-  events: PipelineEventPayload[];
-}
-
-export interface BatchPipelineEventResult {
-  summary: {
-    total: number;
-    anchored: number;
-    failed: number;
-  };
-  results: any[];
-}
-
 export interface PipelineConfig {
   id: string;
   organizationId: string;
   name: string;
-  framework: 'langchain' | 'pathway' | 'llamaindex' | 'custom' | null;
+  framework: string | null;
   description: string | null;
   isActive: boolean;
   createdAt: string;

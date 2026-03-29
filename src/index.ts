@@ -59,6 +59,7 @@ export { verifyHashStandalone as verifyHash } from './verify'
 export { verifyLocally, verifyOnChain, deriveAnchorAddress } from './verify'
 export { verifyWebhookSignature, parseWebhookEvent, webhookMiddleware } from './webhook'
 export { VerificationCache } from './verify/cache'
+export { PipelineModule } from './pipeline'
 
 // ── Report utilities ──
 export { generatePdfReport } from './report/index'
@@ -116,6 +117,13 @@ export type {
   VerificationPerformedEvent,
   QuotaWarningEvent,
   AnomalyDetectedEvent,
+  PipelineEventType,
+  PipelineEventPayload,
+  PipelineEventResult,
+  PipelineConfig,
+  PipelineSessionSummary,
+  ComplianceFramework,
+  RiskLevel
 } from './types'
 
 // Re-export certificate type (not in types/index.ts)

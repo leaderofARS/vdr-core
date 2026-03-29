@@ -63,5 +63,9 @@ export type {
   PipelineEventPayload,
   PipelineEventResult,
   BatchPipelineEventPayload,
-  BatchPipelineEventResult
+  BatchPipelineEventResult,
+  PipelineConfig,
+  PipelineSessionSummary,
+  ComplianceFramework,
+  RiskLevel
 } from './pipeline'
