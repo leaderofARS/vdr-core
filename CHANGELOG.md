@@ -5,16 +5,23 @@ All notable changes to the `@sipheron/vdr-core` SDK will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-04-04
 
 ### Added
+- **Production Stable Interface**: Formal 1.0.0 release of the core SDK.
+- **Zero-Knowledge PII Scrubbing**: Lightweight, local-side redirection of sensitive data (Emails, SSNs, Credit Cards, API Keys) before evidence transmission.
+- **AI Compliance Telemetry**: Native support for RAG and AI pipeline event tracking, enabling individual Merkle Proof verification for AI interactions.
 - **Soft Revocation Registry**: Implement cryptographic soft revocation. Mark anchors as superseded without deleting the immutable blockchain record.
   - Added `client.anchors.revoke()` method to manually trigger a revocation flag on a managed SipHeron anchor.
   - Verification operations now correctly consume `Status: 'REVOKED'`, resolving with `authentic: true` alongside detailed revocation metrics (`revokedAt`, `supersededByAnchorId`, etc.).
-  - Added robust exported Types (`RevocationReason`, `RevocationRecord`) inside natively supported SDK interfaces.
 - **Document Version Chain (Linked Anchors)**: Link a series of document versions into a verifiable chain.
   - Added `previousAnchorId` field to anchor options to link amended versions to their originals.
   - Added `client.anchors.getVersionChain()` method to automatically retrieve and trace a document's provable history lifecycle.
+
+### Changed
+- **Beta Cleanup**: Promoted all remaining experimental modules (Metadata validation, Batch anchoring, Verification cache) to Stable production status.
+- **Solana Ecosystem Optimization**: Hardened RPC failover across mainnet-beta and devnet clusters.
+
 
 ---
 
