@@ -1,6 +1,6 @@
 {
   "name": "@sipheron/vdr-core",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "SipHeron VDR-CORE Official JavaScript/TypeScript SDK. Cryptographically anchor documents to Solana.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -59,6 +59,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
     "axios": "^1.6.0",
+    "i": "^0.3.7",
     "pdf-lib": "^1.17.1"
   },
   "peerDependencies": {
